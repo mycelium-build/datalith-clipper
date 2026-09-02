@@ -1,0 +1,11 @@
+{
+    "background": {
+        "scripts": ["background/main.js"]
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "clipper@datalith.app",
+            "strict_min_version": "128.0"
+        }
+    }
+}

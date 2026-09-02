@@ -1,0 +1,67 @@
+.shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    background: var(--dl-surface);
+    border-right: 1px solid var(--dl-border);
+    padding: var(--space-6) var(--space-4);
+    width: 15rem;
+}
+
+.brand {
+    align-items: center;
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+}
+
+.brand-mark {
+    color: var(--dl-logo-1);
+    font-family: var(--font-pixel);
+}
+
+.brand h1 {
+    font-size: 1rem;
+}
+
+.nav-section {
+    color: var(--dl-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    margin: var(--space-6) 0 var(--space-2);
+    text-transform: uppercase;
+}
+
+.nav-item {
+    border: 1px solid transparent;
+    color: var(--dl-fg);
+    display: block;
+    font-size: 0.875rem;
+    padding: var(--space-2) var(--space-3);
+    text-decoration: none;
+
+    &:hover {
+        background: var(--dl-surface-alt);
+    }
+
+    &.is-active {
+        background: var(--dl-surface-alt);
+        border-color: var(--dl-border);
+    }
+}
+
+.content {
+    flex: 1;
+    padding: var(--space-8) var(--space-8) var(--space-8) var(--space-6);
+
+    h2 {
+        font-size: 1.125rem;
+        margin-bottom: var(--space-4);
+    }
+}
+
+.muted {
+    color: var(--dl-muted);
+}

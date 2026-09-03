@@ -5,10 +5,11 @@ import browser from "webextension-polyfill"
 import { el, icon } from "../../lib/dom"
 import { captureContext } from "../../lib/extract"
 import { matchAnyGlob } from "../../lib/glob"
+import { createCompleter, resolveInterpreterConfig } from "../../lib/interpreter"
 import { loadSettings, saveSettings } from "../../lib/settings"
 import type { ClipperSettings } from "../../lib/settings-schema"
 import { resolveTheme } from "../../lib/settings-schema"
-import { renderTemplate } from "../../lib/template"
+import { renderTemplate, type RenderOptions } from "../../lib/template"
 import {
     DEFAULT_TEMPLATE,
     LAST_USED_VAULT,
@@ -109,10 +110,19 @@ export class Panel {
         const url = location.href
         const context = captureContext(document, url, { selection, highlights: [] })
         const templates = resolveTemplates(settings.templates)
-        this.templates = templates
         const template = pickTemplate(templates, url, settings.lastUsed.templateId)
         const variables: Record<string, unknown> = { ...context }
-        const renderOptions = { variables }
+        const interpreterConfig = resolveInterpreterConfig(settings, template.context)
+        if (settings.interpreter.enabled && !interpreterConfig) {
+            this.setStatus(
+                "Interpreter is enabled but no model is configured, prompts render as plain text",
+                "muted",
+            )
+        }
+        const renderOptions: RenderOptions = {
+            variables,
+            ...(interpreterConfig ? { interpreter: createCompleter(interpreterConfig) } : {}),
+        }
         const draft: DraftState = {
             template,
             context,

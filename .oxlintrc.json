@@ -14,20 +14,5 @@
         "import/no-cycle": "error",
         "import/no-unassigned-import": ["error", { "allow": ["**/*.css"] }]
     },
-    "overrides": [
-        {
-            "files": ["**/*.ts"],
-            "rules": {
-                "sort-imports": [
-                    "error",
-                    {
-                        "ignoreCase": true,
-                        "allowSeparatedGroups": true,
-                        "memberSyntaxSortOrder": ["none", "all", "single", "multiple"]
-                    }
-                ]
-            }
-        }
-    ],
     "options": { "denyWarnings": true }
 }

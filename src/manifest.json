@@ -3,7 +3,6 @@
     "name": "Datalith Clipper",
     "version": "0.0.1",
     "description": "Save web pages as notes into your Datalith vaults.",
-    "minimum_chrome_version": "116",
     "icons": {
         "16": "icons/icon-16.png",
         "48": "icons/icon-48.png",

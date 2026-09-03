@@ -391,6 +391,10 @@
         color: var(--dl-red);
     }
 
+    &.is-muted {
+        color: var(--dl-muted);
+    }
+
     &.is-success {
         color: var(--dl-green);
     }

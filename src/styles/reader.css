@@ -90,7 +90,9 @@
         max-width: 100%;
     }
 
-    h1, h2, h3 {
+    h1,
+    h2,
+    h3 {
         line-height: 1.25;
         margin: 1.6em 0 0.6em;
     }
@@ -142,7 +144,8 @@
         width: 100%;
     }
 
-    th, td {
+    th,
+    td {
         border: 1px solid var(--dl-border);
         padding: 4px 8px;
         text-align: left;

@@ -39,6 +39,7 @@
     ],
     "permissions": ["storage"],
     "host_permissions": ["http://127.0.0.1:42908/*"],
+    "optional_host_permissions": ["http://*/*", "https://*/*"],
     "commands": {
         "toggle-highlighter": {
             "suggested_key": { "default": "Alt+Shift+H" },

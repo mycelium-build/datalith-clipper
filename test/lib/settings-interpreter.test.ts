@@ -42,7 +42,7 @@ describe("templates storage", () => {
 
     it("uses stored templates when present", () => {
         const stored = [{ ...DEFAULT_TEMPLATE, id: "default", name: "Custom" }]
-        expect(resolveTemplates(stored)[0].name).toBe("Custom")
+        expect(resolveTemplates(stored)[0]?.name).toBe("Custom")
     })
 })
 

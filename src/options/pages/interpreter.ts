@@ -1,3 +1,5 @@
+import browser from "webextension-polyfill"
+
 import { el } from "../../lib/dom"
 import type { InterpreterModel, InterpreterProvider } from "../../lib/settings-schema"
 import { uniqueId, type PageContext } from "../state"
@@ -123,20 +125,32 @@ function providerDialog(ctx: PageContext, providerId: string | null): void {
     const baseUrl = textInput(existing?.baseUrl ?? "", "https://api.openai.com/v1")
     const apiKey = textInput(existing?.apiKey ?? "", "sk-…")
     openDialog("Provider", [fieldRow("Base URL", baseUrl), fieldRow("API key", apiKey)], () => {
-        if (existing) {
-            existing.baseUrl = baseUrl.value.trim()
-            existing.apiKey = apiKey.value.trim()
-        } else {
-            const provider: InterpreterProvider = {
-                id: uniqueId("provider"),
-                baseUrl: baseUrl.value.trim(),
-                apiKey: apiKey.value.trim(),
+        const apply = () => {
+            if (existing) {
+                existing.baseUrl = baseUrl.value.trim()
+                existing.apiKey = apiKey.value.trim()
+            } else {
+                const provider: InterpreterProvider = {
+                    id: uniqueId("provider"),
+                    baseUrl: baseUrl.value.trim(),
+                    apiKey: apiKey.value.trim(),
+                }
+                interpreter.providers.push(provider)
             }
-            interpreter.providers.push(provider)
+            ctx.save()
+            ctx.rerender()
         }
-        ctx.save()
-        ctx.rerender()
+        void requestOriginPermission(baseUrl.value).then(apply)
     })
+}
+
+async function requestOriginPermission(baseUrl: string): Promise<void> {
+    try {
+        const origin = `${new URL(baseUrl.trim()).origin}/*`
+        await browser.permissions.request({ origins: [origin] })
+    } catch {
+        // Invalid URL or permission denied
+    }
 }
 
 function buildModelList(ctx: PageContext): HTMLElement {

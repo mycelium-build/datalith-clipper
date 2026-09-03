@@ -1,8 +1,3 @@
-export interface TemplateProperty {
-    name: string
-    value: string
-}
-
 export interface Template {
     id: string
     name: string
@@ -10,8 +5,9 @@ export interface Template {
     noteName: string
     noteFolder: string
     vault: string
-    properties: TemplateProperty[]
+    properties: { name: string; value: string }[]
     content: string
+    context: string
 }
 
 export const LAST_USED_VAULT = "Last used"
@@ -38,6 +34,25 @@ export const DEFAULT_TEMPLATE: Template = {
         "{{highlights}}\n" +
         "{% if image || selection || highlights %}---{% endif %}\n" +
         "{{content}}",
+    context: "",
 }
 
 export const DEFAULT_TEMPLATES: Template[] = [DEFAULT_TEMPLATE]
+
+export function resolveTemplates(stored: Template[]): Template[] {
+    return stored.length > 0 ? stored : DEFAULT_TEMPLATES
+}
+
+export function newTemplate(): Template {
+    return {
+        id: `template-${crypto.randomUUID?.() ?? Date.now().toString(36)}`,
+        name: "New template",
+        trigger: "",
+        noteName: "{{title}}",
+        noteFolder: "Clips",
+        vault: LAST_USED_VAULT,
+        properties: [],
+        content: "{{content}}",
+        context: "",
+    }
+}

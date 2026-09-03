@@ -25,7 +25,7 @@ If applicable, paste the full addon console or network error. Remove any tokens 
 
 - Browser and version: [e.g. Firefox 128]
 - OS and version: [e.g. macOS 15, Windows 11, Ubuntu 24.04]
-- Extension version: [e.g. 1.0.0] 
+- Extension version: [e.g. 1.0.0]
 - Site URL: [e.g. https://mycelium-build.github.io/datalith/]
 
 **Additional context**  

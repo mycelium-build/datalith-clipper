@@ -1,5 +1,6 @@
 # build output
 dist/
+release/
 
 # Imported from the Datalith app repository during the build.
 src/data/logo.txt

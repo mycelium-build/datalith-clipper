@@ -13,7 +13,12 @@ export function captureContext(
     url: string,
     extras: CaptureExtras = {},
 ): ClipContext {
-    const parsed = new Defuddle(doc, { markdown: true }).parse() as DefuddleParseResult
+    const clone = new DOMParser().parseFromString(doc.documentElement.outerHTML, "text/html")
+    // after clone URI is `about:blank`, rewrite it so relative link work correctly
+    const base = clone.createElement("base")
+    base.setAttribute("href", url)
+    clone.head.prepend(base)
+    const parsed = new Defuddle(clone, { markdown: true }).parse() as DefuddleParseResult
     return buildContext(doc, url, parsed, extras)
 }
 

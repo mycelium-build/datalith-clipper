@@ -1,0 +1,191 @@
+import browser from "webextension-polyfill"
+
+import themesIndex from "../../data/themes.json"
+import { el } from "../../lib/dom"
+import type { VaultsResponse } from "../../shared/messages"
+import type { PageContext } from "../state"
+import { importSettings } from "../state"
+import {
+    actionButton,
+    emptyNote,
+    fieldRow,
+    listCard,
+    listRow,
+    pageSection,
+    selectInput,
+    toggleInput,
+} from "../ui"
+
+const CHANGELOG_URL = "https://github.com/mycelium-build/datalith-clipper/blob/main/CHANGELOG.md"
+
+interface ThemeIndexEntry {
+    id: string
+    name: string
+    mode: string
+}
+
+const HOTKEYS: Array<[string, string]> = [
+    ["Toggle highlighter", "Alt+Shift+H"],
+    ["Open Datalith Clipper", "Alt+Shift+O"],
+    ["Toggle reader", "Alt+Shift+R"],
+]
+
+export function renderGeneral(ctx: PageContext): HTMLElement {
+    const container = document.createElement("div")
+
+    const version = browser.runtime.getManifest().version
+    const changelog = document.createElement("a")
+    changelog.href = CHANGELOG_URL
+    changelog.target = "_blank"
+    changelog.rel = "noreferrer"
+    changelog.textContent = "Changelog"
+    container.append(
+        pageSection("Version", [
+            fieldRow("Version", el("span", { text: `v${version}` })),
+            fieldRow("What's new", changelog),
+        ]),
+    )
+
+    container.append(pageSection("Vaults", [buildVaultSection()]))
+
+    const themeOptionsFor = (mode: string) =>
+        (themesIndex as ThemeIndexEntry[])
+            .filter((theme) => theme.mode === mode)
+            .map((theme) => ({ value: theme.id, label: theme.name }))
+    container.append(
+        pageSection("Themes", [
+            fieldRow(
+                "Appearance",
+                selectInput(
+                    [
+                        { value: "auto", label: "Auto" },
+                        { value: "light", label: "Light" },
+                        { value: "dark", label: "Dark" },
+                    ],
+                    ctx.state.settings.appearance.mode,
+                    (mode) => {
+                        ctx.state.settings.appearance.mode =
+                            mode as typeof ctx.state.settings.appearance.mode
+                        ctx.applyTheme()
+                        ctx.save()
+                    },
+                ),
+            ),
+            fieldRow(
+                "Light theme",
+                selectInput(themeOptionsFor("light"), ctx.state.settings.appearance.light, (id) => {
+                    ctx.state.settings.appearance.light = id
+                    ctx.applyTheme()
+                    ctx.save()
+                }),
+            ),
+            fieldRow(
+                "Dark theme",
+                selectInput(themeOptionsFor("dark"), ctx.state.settings.appearance.dark, (id) => {
+                    ctx.state.settings.appearance.dark = id
+                    ctx.applyTheme()
+                    ctx.save()
+                }),
+            ),
+        ]),
+    )
+
+    container.append(
+        pageSection(
+            "Hotkeys",
+            HOTKEYS.map(([label, keys]) =>
+                fieldRow(label, el("kbd", { className: "hotkey", text: keys })),
+            ),
+        ),
+    )
+
+    container.append(
+        pageSection("Behavior", [
+            fieldRow(
+                "Save clipped note without opening Datalith",
+                toggleInput(ctx.state.settings.behavior.saveWithoutOpening, (value) => {
+                    ctx.state.settings.behavior.saveWithoutOpening = value
+                    ctx.save()
+                }),
+                "When off, the saved note is revealed in Datalith after every save.",
+            ),
+        ]),
+    )
+
+    container.append(pageSection("Export & import", [buildExportImport(ctx)]))
+    return container
+}
+
+function buildVaultSection(): HTMLElement {
+    const list = listCard([emptyNote("Loading vaults…")])
+    const wrapper = el("div", { className: "vault-section" }, [
+        list,
+        el("div", { className: "field-row" }, [
+            actionButton("Sync", async () => await loadVaults(list)),
+        ]),
+    ])
+    void loadVaults(list)
+    return wrapper
+}
+
+async function loadVaults(list: HTMLElement): Promise<void> {
+    list.replaceChildren(emptyNote("Loading vaults…"))
+    const response = (await browser.runtime.sendMessage({ type: "get-vaults" })) as VaultsResponse
+    if (!response.ok) {
+        list.replaceChildren(emptyNote(`Unavailable — ${response.error}`))
+        return
+    }
+    if (response.vaults.length === 0) {
+        list.replaceChildren(emptyNote("No vaults configured in Datalith."))
+        return
+    }
+    list.replaceChildren(
+        ...response.vaults.map((vault) =>
+            listRow([
+                el("span", { className: "list-title", text: vault.name }),
+                el("span", { className: "list-subtitle", text: vault.path }),
+            ]),
+        ),
+    )
+}
+
+function buildExportImport(ctx: PageContext): HTMLElement {
+    const exportButton = actionButton("Export", () => {
+        const blob = new Blob([JSON.stringify({ settings: ctx.state.settings }, null, 4)], {
+            type: "application/json",
+        })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = url
+        link.download = "datalith-clipper-settings.json"
+        link.click()
+        URL.revokeObjectURL(url)
+    })
+
+    const fileInput = document.createElement("input")
+    fileInput.type = "file"
+    fileInput.accept = "application/json"
+    fileInput.hidden = true
+    fileInput.addEventListener("change", async () => {
+        const file = fileInput.files?.[0]
+        if (!file) return
+        try {
+            const parsed: unknown = JSON.parse(await file.text())
+            ctx.state.settings = importSettings(parsed)
+            ctx.applyTheme()
+            await ctx.save()
+            ctx.rerender()
+        } catch {
+            // Invalid file — ignore.
+        }
+        fileInput.value = ""
+    })
+    const importButton = actionButton("Import", () => fileInput.click())
+
+    const row = fieldRow(
+        "Settings backup",
+        el("span", { className: "button-row" }, [exportButton, importButton]),
+        "Templates, themes, interpreter providers and preferences.",
+    )
+    return el("div", {}, [row, fileInput])
+}

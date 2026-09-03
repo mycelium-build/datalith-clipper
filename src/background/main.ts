@@ -1,8 +1,10 @@
 import browser from "webextension-polyfill"
 
 import { ClipperApi, type SaveNoteRequest } from "../lib/api"
+import type { InterpreterConfig, InterpreterResponse } from "../lib/interpreter"
 import { loadSettings } from "../lib/settings"
 import { isCommandMessage, type SaveResponse, type VaultsResponse } from "../shared/messages"
+import { completePrompt } from "./interpreter"
 import { saveWithRetry } from "./save-pipeline"
 
 async function sendToActiveTab(message: { type: string }): Promise<void> {
@@ -76,6 +78,16 @@ browser.runtime.onMessage.addListener((message: unknown) => {
         return note
             ? handleSaveClip(note)
             : Promise.resolve({ ok: false, error: "Malformed save request" })
+    }
+    if (type === "interpreter-complete") {
+        const request = message as { config?: InterpreterConfig; prompt?: string }
+        if (!request.config || typeof request.prompt !== "string") {
+            return Promise.resolve<InterpreterResponse>({
+                ok: false,
+                error: "Malformed interpreter request",
+            })
+        }
+        return completePrompt(request.config, request.prompt)
     }
     if (isCommandMessage(message)) {
         // Commands from other extension contexts (options page shortcuts).

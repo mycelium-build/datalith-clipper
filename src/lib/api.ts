@@ -11,7 +11,9 @@ export interface SaveNoteRequest {
     content: string
 }
 
-export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string }
+export type ApiResult<T> =
+    | { ok: true; data: T }
+    | { ok: false; error: string; kind: "unreachable" | "http" }
 
 export class ClipperApi {
     private baseUrl: string
@@ -56,11 +58,11 @@ export class ClipperApi {
                     detail && typeof detail === "object" && "error" in detail
                         ? String((detail as { error: unknown }).error)
                         : `${response.status} ${response.statusText}`
-                return { ok: false, error: message }
+                return { ok: false, error: message, kind: "http" }
             }
             return { ok: true, data: (await response.json()) as T }
         } catch {
-            return { ok: false, error: "Datalith is unreachable" }
+            return { ok: false, error: "Datalith is unreachable", kind: "unreachable" }
         }
     }
 }

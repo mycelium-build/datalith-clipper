@@ -65,14 +65,18 @@ describe("ClipperApi", () => {
             properties: {},
             content: "body",
         })
-        expect(result).toEqual({ ok: false, error: "Unknown vault" })
+        expect(result).toEqual({ ok: false, error: "Unknown vault", kind: "http" })
     })
 
     it("reports unreachable servers", async () => {
         const api = new ClipperApi("http://127.0.0.1:42908", "", (() =>
             Promise.reject(new TypeError("Failed to fetch"))) as unknown as typeof fetch)
         const result = await api.ping()
-        expect(result).toEqual({ ok: false, error: "Datalith is unreachable" })
+        expect(result).toEqual({
+            ok: false,
+            error: "Datalith is unreachable",
+            kind: "unreachable",
+        })
     })
 
     it("posts notes with name, folder, properties and content", async () => {

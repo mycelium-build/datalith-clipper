@@ -1,6 +1,29 @@
+import type { Template } from "./templates"
+
 export const DEFAULT_BASE_URL = "http://127.0.0.1:42908"
 
 export type AppearanceMode = "auto" | "light" | "dark"
+
+export interface InterpreterProvider {
+    id: string
+    baseUrl: string
+    apiKey: string
+}
+
+export interface InterpreterModel {
+    id: string
+    name: string
+    modelId: string
+    providerId: string
+}
+
+export interface InterpreterSettings {
+    enabled: boolean
+    selectedModelId: string
+    providers: InterpreterProvider[]
+    models: InterpreterModel[]
+    context: string
+}
 
 export interface ClipperSettings {
     version: 1
@@ -19,6 +42,7 @@ export interface ClipperSettings {
         lineHeight: number
         colorLinks: boolean
     }
+    interpreter: InterpreterSettings
     behavior: {
         saveWithoutOpening: boolean
     }
@@ -27,6 +51,7 @@ export interface ClipperSettings {
         folder: string
         templateId: string
     }
+    templates: Template[]
 }
 
 export const READER_FONTS: Array<{ label: string; stack: string }> = [
@@ -66,6 +91,13 @@ export const DEFAULT_SETTINGS: ClipperSettings = {
         dark: "datalith-dark",
     },
     reader: { ...READER_DEFAULTS },
+    interpreter: {
+        enabled: false,
+        selectedModelId: "",
+        providers: [],
+        models: [],
+        context: "",
+    },
     behavior: {
         saveWithoutOpening: true,
     },
@@ -74,6 +106,7 @@ export const DEFAULT_SETTINGS: ClipperSettings = {
         folder: "",
         templateId: "default",
     },
+    templates: [],
 }
 
 function pick<T>(value: T | undefined, fallback: T): T {
@@ -104,6 +137,14 @@ export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): Cli
             lineHeight: pickNumber(stored.reader?.lineHeight, defaults.reader.lineHeight),
             colorLinks: stored.reader?.colorLinks ?? defaults.reader.colorLinks,
         },
+        interpreter: {
+            enabled: stored.interpreter?.enabled ?? defaults.interpreter.enabled,
+            selectedModelId:
+                stored.interpreter?.selectedModelId ?? defaults.interpreter.selectedModelId,
+            providers: stored.interpreter?.providers ?? defaults.interpreter.providers,
+            models: stored.interpreter?.models ?? defaults.interpreter.models,
+            context: stored.interpreter?.context ?? defaults.interpreter.context,
+        },
         behavior: {
             saveWithoutOpening:
                 stored.behavior?.saveWithoutOpening ?? defaults.behavior.saveWithoutOpening,
@@ -113,6 +154,7 @@ export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): Cli
             folder: pick(stored.lastUsed?.folder, defaults.lastUsed.folder),
             templateId: pick(stored.lastUsed?.templateId, defaults.lastUsed.templateId),
         },
+        templates: Array.isArray(stored.templates) ? stored.templates : defaults.templates,
     }
 }
 

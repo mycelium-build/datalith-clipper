@@ -1,4 +1,5 @@
 import type { SaveNoteRequest } from "../lib/api"
+import type { InterpreterConfig } from "../lib/interpreter"
 
 export const COMMANDS = [
     "toggle-panel",
@@ -17,6 +18,7 @@ export type BackgroundRequest =
     | { type: "open-settings" }
     | { type: "get-vaults" }
     | { type: "save-clip"; note: SaveNoteRequest }
+    | { type: "interpreter-complete"; config: InterpreterConfig; prompt: string }
 
 export type VaultsResponse =
     | { ok: true; vaults: Array<{ name: string; path: string }> }

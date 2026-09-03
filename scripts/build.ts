@@ -65,14 +65,17 @@ async function bundle(target: Target, watch: boolean): Promise<void> {
     const options: BuildOptions[] = [
         {
             input: { "background/main": entry("background/main.ts") },
+            moduleTypes: { ".css": "text" },
             output: { dir, format: "iife", sourcemap: "inline", entryFileNames: "[name].js" },
         },
         {
             input: { "content/main": entry("content/main.ts") },
+            moduleTypes: { ".css": "text" },
             output: { dir, format: "iife", sourcemap: "inline", entryFileNames: "[name].js" },
         },
         {
             input: { "options/options": entry("options/main.ts") },
+            moduleTypes: { ".css": "text" },
             output: { dir, format: "iife", sourcemap: "inline", entryFileNames: "[name].js" },
         },
     ]

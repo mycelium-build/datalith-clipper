@@ -10,9 +10,9 @@ import type { ClipperSettings } from "../../lib/settings-schema"
 import { resolveTheme } from "../../lib/settings-schema"
 import { renderTemplate } from "../../lib/template"
 import {
-    DEFAULT_TEMPLATES,
     DEFAULT_TEMPLATE,
     LAST_USED_VAULT,
+    resolveTemplates,
     type Template,
 } from "../../lib/templates"
 import type { SaveResponse, VaultsResponse } from "../../shared/messages"
@@ -73,6 +73,7 @@ export class Panel {
     private settings: ClipperSettings | null = null
     private minimized = false
     private propertiesCollapsed = false
+    private templates: Template[] = []
 
     private constructor(host: HTMLElement) {
         this.host = host
@@ -107,7 +108,9 @@ export class Panel {
         this.root.classList.add("is-loading")
         const url = location.href
         const context = captureContext(document, url, { selection, highlights: [] })
-        const template = pickTemplate(DEFAULT_TEMPLATES, url, settings.lastUsed.templateId)
+        const templates = resolveTemplates(settings.templates)
+        this.templates = templates
+        const template = pickTemplate(templates, url, settings.lastUsed.templateId)
         const variables: Record<string, unknown> = { ...context }
         const renderOptions = { variables }
         const draft: DraftState = {
@@ -186,9 +189,6 @@ export class Panel {
             },
         })
         this.templateSelect = select
-        for (const template of DEFAULT_TEMPLATES) {
-            select.append(el("option", { text: template.name, attributes: { value: template.id } }))
-        }
         const buttons: Array<[string, string, () => void]> = [
             ["columns", "Variables", () => this.toggleVariables(true)],
             ["pen", "Highlighter", () => this.toggleHighlighter()],
@@ -425,10 +425,15 @@ export class Panel {
     private populate(): void {
         const state = this.state
         if (!state) return
+        this.templateSelect.replaceChildren(
+            ...this.templates.map((template) =>
+                el("option", { text: template.name, attributes: { value: template.id } }),
+            ),
+        )
+        this.templateSelect.value = state.template.id
         this.titleInput.value = state.title
         this.folderInput.value = state.folder
         this.contentInput.value = state.content
-        this.templateSelect.value = state.template.id
         this.renderPropertyRows()
         this.renderVariablesTable()
     }

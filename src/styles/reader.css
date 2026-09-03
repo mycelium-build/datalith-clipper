@@ -1,0 +1,150 @@
+:host {
+    all: initial;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    color-scheme: light dark;
+    font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+}
+
+.reader-root {
+    background: var(--dl-bg);
+    color: var(--dl-fg);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.reader-header {
+    align-items: center;
+    background: var(--dl-surface);
+    border-bottom: 1px solid var(--dl-border);
+    display: flex;
+    flex: none;
+    gap: 8px;
+    padding: 6px 10px;
+}
+
+.reader-title {
+    flex: 1;
+    font-family: var(--font-pixel, "Pixeloid Sans", monospace);
+    font-size: 12px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.icon-button {
+    align-items: center;
+    background: var(--dl-surface);
+    border: 1px solid var(--dl-border);
+    color: var(--dl-fg);
+    cursor: pointer;
+    display: inline-flex;
+    height: 24px;
+    justify-content: center;
+    padding: 0;
+    width: 24px;
+
+    &:hover {
+        background: var(--dl-surface-alt);
+    }
+
+    &:active {
+        transform: translate(1px, 1px);
+    }
+
+    svg {
+        height: 1em;
+        width: 1em;
+    }
+}
+
+.reader-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.reader-article {
+    font-family: var(--reader-font, system-ui, sans-serif);
+    font-size: var(--reader-size, 16px);
+    line-height: var(--reader-line-height, 1.6);
+    margin: 0 auto;
+    max-width: 72ch;
+    padding: 24px 20px 64px;
+
+    a {
+        color: var(--reader-link-color, inherit);
+    }
+
+    img {
+        height: auto;
+        max-width: 100%;
+    }
+
+    h1, h2, h3 {
+        line-height: 1.25;
+        margin: 1.6em 0 0.6em;
+    }
+
+    h1 {
+        font-size: 1.6em;
+    }
+
+    h2 {
+        font-size: 1.35em;
+    }
+
+    h3 {
+        font-size: 1.15em;
+    }
+
+    p {
+        margin: 0 0 1em;
+    }
+
+    blockquote {
+        border-left: 2px solid var(--dl-accent);
+        color: var(--dl-muted);
+        margin: 1em 0;
+        padding-left: 12px;
+    }
+
+    pre {
+        background: var(--dl-code-bg);
+        border: 1px solid var(--dl-border);
+        overflow-x: auto;
+        padding: 10px;
+
+        code {
+            background: none;
+            padding: 0;
+        }
+    }
+
+    code {
+        background: var(--dl-code-bg);
+        font-family: var(--font-mono, ui-monospace, monospace);
+        font-size: 0.9em;
+        padding: 1px 3px;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        border: 1px solid var(--dl-border);
+        padding: 4px 8px;
+        text-align: left;
+    }
+}

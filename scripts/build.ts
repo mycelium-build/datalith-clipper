@@ -49,9 +49,12 @@ async function writeManifest(target: Target): Promise<void> {
     let manifest = { ...(await readJson(path.join(extensionRoot, "src", "manifest.json"))) }
     const version = typeof pkg.version === "string" ? pkg.version : "0.0.0"
     manifest.version = version
-    if (target === "firefox") {
-        const patch = await readJson(path.join(extensionRoot, "src", "manifest.firefox.json"))
+    const patchPath = path.join(extensionRoot, "src", `manifest.${target}.json`)
+    try {
+        const patch = await readJson(patchPath)
         manifest = mergeJson(manifest, patch)
+    } catch {
+        // No browser-specific patch for this target.
     }
     await writeFile(
         path.join(distRoot, target, "manifest.json"),

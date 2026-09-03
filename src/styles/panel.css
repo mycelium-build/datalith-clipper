@@ -23,6 +23,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+
     &.is-minimized {
         background: transparent;
         border: none;
@@ -31,6 +32,7 @@
         .pill {
             display: inline-flex;
         }
+
         .panel-body {
             display: none;
         }
@@ -89,12 +91,15 @@
     justify-content: center;
     padding: 0;
     width: 24px;
+
     &:hover {
         background: var(--dl-surface-alt);
     }
+
     &:active {
         transform: translate(1px, 1px);
     }
+
     &.is-active {
         background: var(--dl-accent);
         border-color: var(--dl-accent);
@@ -128,6 +133,7 @@
     font-size: 14px;
     font-weight: 700;
     padding: 8px;
+
     &:focus {
         outline: 1px solid var(--dl-accent);
     }
@@ -139,9 +145,11 @@
     max-height: 40%;
     overflow-y: auto;
     padding: 4px 8px 8px;
+
     &.is-collapsed .properties-toggle .chevron {
         transform: rotate(-90deg);
     }
+
     &:not(.is-collapsed) .property-rows {
         display: flex;
     }
@@ -159,6 +167,7 @@
     letter-spacing: 0.06em;
     padding: 2px 0;
     text-transform: uppercase;
+
     &:hover {
         color: var(--dl-fg);
     }
@@ -186,6 +195,7 @@
         color: var(--dl-fg);
         font-size: 12px;
         padding: 3px 4px;
+
         &:focus {
             outline: 1px solid var(--dl-accent);
 
@@ -215,6 +225,7 @@
     height: 22px;
     padding: 0;
     width: 22px;
+
     &:hover {
         color: var(--dl-red);
     }
@@ -230,6 +241,7 @@
     gap: 4px;
     margin-top: 4px;
     padding: 2px 0;
+
     &:hover {
         color: var(--dl-fg);
     }
@@ -258,6 +270,7 @@
     cursor: pointer;
     font-size: 11px;
     padding: 2px 8px;
+
     &.is-active {
         background: var(--dl-surface);
         border-color: var(--dl-border);
@@ -276,6 +289,7 @@
     padding: 8px;
     resize: none;
     width: 100%;
+
     &:focus {
         outline: none;
     }
@@ -292,15 +306,18 @@
     img {
         max-width: 100%;
     }
+
     pre {
         background: var(--dl-code-bg);
         border: 1px solid var(--dl-border);
         overflow-x: auto;
         padding: 6px;
     }
+
     a {
         color: var(--dl-accent);
     }
+
     blockquote {
         border-left: 2px solid var(--dl-accent);
         color: var(--dl-muted);
@@ -350,12 +367,15 @@
     font-size: 13px;
     font-weight: 700;
     padding: 6px;
+
     &:hover:not(:disabled) {
         filter: brightness(1.1);
     }
+
     &:active:not(:disabled) {
         transform: translate(1px, 1px);
     }
+
     &:disabled {
         cursor: not-allowed;
         opacity: 0.5;
@@ -366,9 +386,11 @@
     font-size: 11px;
     min-height: 14px;
     padding: 0 8px 6px;
+
     &.is-error {
         color: var(--dl-red);
     }
+
     &.is-success {
         color: var(--dl-green);
     }
@@ -379,6 +401,7 @@
     display: none;
     inset: 0;
     position: absolute;
+
     &.is-open {
         display: block;
     }
@@ -414,7 +437,8 @@
     overflow-y: auto;
     width: 100%;
 
-    th, td {
+    th,
+    td {
         border-bottom: 1px solid var(--dl-border);
         padding: 4px 8px;
         text-align: left;

@@ -1,0 +1,49 @@
+{
+    "name": "datalith-clipper",
+    "type": "module",
+    "version": "0.0.1",
+    "scripts": {
+        "sync-assets": "node --env-file-if-exists=.env scripts/sync-assets.ts",
+        "build-themes": "node scripts/build-themes.ts",
+        "build-icons": "node scripts/build-icons.ts",
+        "prebuild": "npm run build-themes && npm run build-icons",
+        "build": "node scripts/build.ts",
+        "watch": "node scripts/build.ts --watch",
+        "package": "node scripts/package.ts",
+        "typecheck": "tsc --noEmit",
+        "licenses:generate": "node scripts/licenses/generate.ts",
+        "licenses:check": "node scripts/licenses/check.ts",
+        "test": "vitest run",
+        "lint": "oxlint && stylelint \"src/styles/*.css\"",
+        "lint:fix": "oxlint --fix && stylelint --fix \"src/styles/*.css\"",
+        "fmt": "oxfmt .",
+        "fmt:check": "oxfmt --check ."
+    },
+    "dependencies": {
+        "defuddle": "^0.19.3",
+        "dompurify": "^3.4.14",
+        "luxon": "^3.7.2",
+        "marked": "^18.0.11",
+        "sharp": "^0.35.4",
+        "webextension-polyfill": "^0.12.0"
+    },
+    "devDependencies": {
+        "@types/chrome": "^0.2.8",
+        "@types/luxon": "^3.7.5",
+        "@types/node": "^26.4.1",
+        "@types/webextension-polyfill": "^0.12.6",
+        "generate-license-file": "4.2.5",
+        "linkedom": "^0.18.13",
+        "oxfmt": "^0.66.0",
+        "oxlint": "^1.81.0",
+        "policygen": "^0.6.0",
+        "rolldown": "^1.2.7",
+        "stylelint": "^17.14.1",
+        "stylelint-config-standard": "^40.0.0",
+        "typescript": "^7.0.2",
+        "vitest": "^5.0.0"
+    },
+    "allowScripts": {
+        "fsevents@2.3.3": true
+    }
+}

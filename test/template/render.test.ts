@@ -290,4 +290,60 @@ describe("renderTemplate", () => {
         })
         expect(result).toBe("T — <SUMMARIZE>")
     })
+
+    it("keeps deferred variables in the source", async () => {
+        const result = await renderTemplate("# {{title}}\n{{highlights}}\n", {
+            variables: { title: "T", highlights: ["a"] },
+            deferred: ["highlights"],
+        })
+        expect(result).toBe("# T\n{{highlights}}\n")
+    })
+
+    it("keeps deferred variables with pipes in the source", async () => {
+        const result = await renderTemplate("{{highlights | trim}}!", {
+            variables: { highlights: "  x  " },
+            deferred: ["highlights"],
+        })
+        expect(result).toBe("{{highlights | trim}}!")
+    })
+
+    it("still evaluates deferred variables inside if conditions", async () => {
+        const result = await renderTemplate("{% if highlights %}[{{highlights}}]{% endif %}", {
+            variables: { highlights: ["a"] },
+            deferred: ["highlights"],
+        })
+        expect(result).toBe("[{{highlights}}]")
+    })
+
+    it("resolves deferred variables once deferral is lifted", async () => {
+        const result = await renderTemplate("{{highlights}}", {
+            variables: { highlights: ["a", "b"] },
+        })
+        expect(result).toBe("a\n\nb")
+    })
+
+    it("keeps prompts in the source with keepPrompts", async () => {
+        const result = await renderTemplate("A {'summarize this'} B", {
+            variables: {},
+            keepPrompts: true,
+        })
+        expect(result).toBe("A {'summarize this'} B")
+    })
+
+    it("keeps prompts while resolving other variables", async () => {
+        const result = await renderTemplate("{{title}} {'summarize'}", {
+            variables: { title: "T" },
+            keepPrompts: true,
+        })
+        expect(result).toBe("T {'summarize'}")
+    })
+
+    it("evaluates prompts through the interpreter when not kept", async () => {
+        const result = await renderTemplate("{'summarize'}", {
+            variables: {},
+            interpreter: async (prompt) => `<${prompt.toUpperCase()}>`,
+            keepPrompts: false,
+        })
+        expect(result).toBe("<SUMMARIZE>")
+    })
 })

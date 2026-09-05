@@ -268,7 +268,7 @@ export class Panel {
         })
         this.templateSelect = select
         const actions: Array<[string, string, string, () => void]> = [
-            ["variables", "columns", "Variables", () => this.toggleVariables(true)],
+            ["variables", "variables", "Variables", () => this.toggleVariables(true)],
             ["highlighter", "pen", "Highlighter", () => this.toggleHighlighter()],
             ["reader", "eye", "Reader", () => toggleReader()],
             [
@@ -277,7 +277,7 @@ export class Panel {
                 "Settings",
                 () => browser.runtime.sendMessage({ type: "open-settings" }),
             ],
-            ["minimize", "chevron-down", "Minimize", () => this.setMinimized(true)],
+            ["minimize", "minimize", "Minimize", () => this.setMinimized(true)],
             ["close", "close", "Close", () => this.destroy()],
         ]
         const toolbar = el("div", { className: "toolbar" }, [
@@ -504,7 +504,7 @@ export class Panel {
                     attributes: { type: "button", title: "Maximize" },
                     events: { click: () => this.setMinimized(false) },
                 },
-                [icon("chevron-up")],
+                [icon("maximize")],
             ),
             el(
                 "button",

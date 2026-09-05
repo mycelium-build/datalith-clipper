@@ -5,16 +5,7 @@ import { el } from "../../lib/dom"
 import type { VaultsResponse } from "../../shared/messages"
 import type { PageContext } from "../state"
 import { importSettings } from "../state"
-import {
-    actionButton,
-    emptyNote,
-    fieldRow,
-    listCard,
-    listRow,
-    pageSection,
-    selectInput,
-    toggleInput,
-} from "../ui"
+import { actionButton, fieldRow, pageSection, selectInput, toggleInput } from "../ui"
 
 const CHANGELOG_URL = "https://github.com/mycelium-build/datalith-clipper/blob/main/CHANGELOG.md"
 
@@ -117,36 +108,35 @@ export function renderGeneral(ctx: PageContext): HTMLElement {
 }
 
 function buildVaultSection(): HTMLElement {
-    const list = listCard([emptyNote("Loading vaults…")])
-    const wrapper = el("div", { className: "vault-section" }, [
-        list,
-        el("div", { className: "field-row" }, [
-            actionButton("Sync", async () => await loadVaults(list)),
-        ]),
-    ])
-    void loadVaults(list)
-    return wrapper
+    const select = document.createElement("select")
+    select.className = "text-input vault-select"
+    select.disabled = true
+    select.append(new Option("Loading vaults…", ""))
+    const sync = actionButton("Sync", () => void loadVaults(select))
+    void loadVaults(select)
+    return el("div", { className: "field-row" }, [select, sync])
 }
 
-async function loadVaults(list: HTMLElement): Promise<void> {
-    list.replaceChildren(emptyNote("Loading vaults…"))
+async function loadVaults(select: HTMLSelectElement): Promise<void> {
+    select.replaceChildren(new Option("Loading vaults…", ""))
+    select.disabled = true
     const response = (await browser.runtime.sendMessage({ type: "get-vaults" })) as VaultsResponse
     if (!response.ok) {
-        list.replaceChildren(emptyNote(`Unavailable — ${response.error}`))
+        select.replaceChildren(new Option(`Unavailable — ${response.error}`, ""))
+        select.disabled = true
         return
     }
     if (response.vaults.length === 0) {
-        list.replaceChildren(emptyNote("No vaults configured in Datalith."))
+        select.replaceChildren(new Option("No vaults configured in Datalith.", ""))
+        select.disabled = true
         return
     }
-    list.replaceChildren(
-        ...response.vaults.map((vault) =>
-            listRow([
-                el("span", { className: "list-title", text: vault.name }),
-                el("span", { className: "list-subtitle", text: vault.path }),
-            ]),
-        ),
-    )
+    for (const vault of response.vaults) {
+        const option = new Option(vault.name, vault.name)
+        option.title = vault.path
+        select.append(option)
+    }
+    select.disabled = false
 }
 
 function buildExportImport(ctx: PageContext): HTMLElement {

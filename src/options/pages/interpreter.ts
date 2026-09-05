@@ -1,7 +1,8 @@
 import browser from "webextension-polyfill"
 
-import { el } from "../../lib/dom"
+import { el, icon } from "../../lib/dom"
 import type { InterpreterModel, InterpreterProvider } from "../../lib/settings-schema"
+import { dragHandle, makeSortable } from "../dnd"
 import { uniqueId, type PageContext } from "../state"
 import {
     actionButton,
@@ -77,8 +78,9 @@ function buildModelSelect(ctx: PageContext): HTMLElement {
 function buildProviderList(ctx: PageContext): HTMLElement {
     const interpreter = ctx.state.settings.interpreter
     const add = actionButton("Add provider", () => providerDialog(ctx, null))
-    const rows = interpreter.providers.map((provider, index) =>
+    const rows = interpreter.providers.map((provider) =>
         listRow([
+            dragHandle(),
             el("div", { className: "list-text" }, [
                 el("span", { className: "list-title", text: provider.baseUrl }),
                 el("span", {
@@ -87,8 +89,6 @@ function buildProviderList(ctx: PageContext): HTMLElement {
                 }),
             ]),
             el("span", { className: "list-actions" }, [
-                iconButton("chevron-up", "Move up", () => moveProvider(ctx, index, -1)),
-                iconButton("chevron-down", "Move down", () => moveProvider(ctx, index, 1)),
                 iconButton("gear", "Edit", () => providerDialog(ctx, provider.id)),
                 iconButton("close", "Delete", () => {
                     interpreter.providers = interpreter.providers.filter(
@@ -103,20 +103,18 @@ function buildProviderList(ctx: PageContext): HTMLElement {
             ]),
         ]),
     )
+    const card = listCard(rows.length > 0 ? rows : [emptyNote("No providers configured.")])
+    makeSortable(card, (from, to) => {
+        const list = interpreter.providers
+        const [moved] = list.splice(from, 1)
+        if (moved) list.splice(to, 0, moved)
+        void ctx.save()
+        ctx.rerender()
+    })
     return el("div", { className: "section-stack" }, [
-        listCard(rows.length > 0 ? rows : [emptyNote("No providers configured.")]),
+        card,
         el("div", { className: "field-row" }, [add]),
     ])
-}
-
-function moveProvider(ctx: PageContext, index: number, direction: number): void {
-    const providers = ctx.state.settings.interpreter.providers
-    const target = index + direction
-    if (target < 0 || target >= providers.length) return
-    const [provider] = providers.splice(index, 1)
-    if (provider) providers.splice(target, 0, provider)
-    ctx.save()
-    ctx.rerender()
 }
 
 function providerDialog(ctx: PageContext, providerId: string | null): void {
@@ -152,17 +150,36 @@ async function requestOriginPermission(baseUrl: string): Promise<void> {
         // Invalid URL or permission denied
     }
 }
-
 function buildModelList(ctx: PageContext): HTMLElement {
     const interpreter = ctx.state.settings.interpreter
     const add = actionButton("Add model", () => modelDialog(ctx, null))
-    const rows = interpreter.models.map((model) =>
-        listRow([
+    const rows = interpreter.models.map((model) => {
+        const selected = interpreter.selectedModelId === model.id
+        const row = listRow([
+            dragHandle(),
             el("div", { className: "list-text" }, [
                 el("span", { className: "list-title", text: model.name }),
                 el("span", { className: "list-subtitle", text: model.modelId }),
             ]),
             el("span", { className: "list-actions" }, [
+                el(
+                    "button",
+                    {
+                        className: `icon-button${selected ? " is-selected-model" : ""}`,
+                        attributes: {
+                            type: "button",
+                            title: selected ? "Model in use" : "Use this model",
+                        },
+                        events: {
+                            click: () => {
+                                interpreter.selectedModelId = model.id
+                                void ctx.save()
+                                ctx.rerender()
+                            },
+                        },
+                    },
+                    [icon("check")],
+                ),
                 iconButton("gear", "Edit", () => modelDialog(ctx, model.id)),
                 iconButton("close", "Delete", () => {
                     interpreter.models = interpreter.models.filter((m) => m.id !== model.id)
@@ -171,14 +188,23 @@ function buildModelList(ctx: PageContext): HTMLElement {
                     ctx.rerender()
                 }),
             ]),
-        ]),
-    )
+        ])
+        if (selected) row.classList.add("is-selected")
+        return row
+    })
+    const card = listCard(rows.length > 0 ? rows : [emptyNote("No models configured.")])
+    makeSortable(card, (from, to) => {
+        const list = interpreter.models
+        const [moved] = list.splice(from, 1)
+        if (moved) list.splice(to, 0, moved)
+        void ctx.save()
+        ctx.rerender()
+    })
     return el("div", { className: "section-stack" }, [
-        listCard(rows.length > 0 ? rows : [emptyNote("No models configured.")]),
+        card,
         el("div", { className: "field-row" }, [add]),
     ])
 }
-
 function modelDialog(ctx: PageContext, modelId: string | null): void {
     const interpreter = ctx.state.settings.interpreter
     if (interpreter.providers.length === 0) {

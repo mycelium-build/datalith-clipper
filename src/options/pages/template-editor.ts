@@ -3,7 +3,9 @@ import browser from "webextension-polyfill"
 import { el } from "../../lib/dom"
 import type { Template } from "../../lib/templates"
 import type { VaultsResponse } from "../../shared/messages"
+import { dragHandle, makeSortable } from "../dnd"
 import type { PageContext } from "../state"
+import { ensureStoredTemplates } from "../state"
 import {
     actionButton,
     emptyNote,
@@ -14,7 +16,6 @@ import {
     textArea,
     textInput,
 } from "../ui"
-import { ensureStoredTemplates } from "./templates"
 
 interface Snippet {
     label: string
@@ -101,7 +102,7 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
         target.setSelectionRange(start + snippet.length, start + snippet.length)
     }
 
-    const back = actionButton("← Templates", () => ctx.navigate("#templates"))
+    const back = actionButton("← Back", () => ctx.navigate("#general"))
     const save = actionButton(
         "Save",
         () => {
@@ -148,25 +149,21 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
                 "{{title}}",
                 (value) => (property.value = value),
             )
-            propertyRows.append(
-                fieldRow(
-                    `Property ${index + 1}`,
-                    el("span", { className: "property-edit-row" }, [
-                        nameField,
-                        valueField,
-                        iconButton("chevron-up", "Move up", () =>
-                            moveProperty(template, index, -1, renderProperties),
-                        ),
-                        iconButton("chevron-down", "Move down", () =>
-                            moveProperty(template, index, 1, renderProperties),
-                        ),
-                        iconButton("close", "Delete", () => {
-                            template.properties.splice(index, 1)
-                            renderProperties()
-                        }),
-                    ]),
-                ),
-            )
+            const row = el("div", { className: "property-edit-row sortable-row" }, [
+                dragHandle("Drag to reorder"),
+                nameField,
+                valueField,
+                iconButton("close", "Delete", () => {
+                    template.properties.splice(index, 1)
+                    renderProperties()
+                }),
+            ])
+            propertyRows.append(row)
+        })
+        makeSortable(propertyRows, (from, to) => {
+            const [moved] = template.properties.splice(from, 1)
+            if (moved) template.properties.splice(to, 0, moved)
+            renderProperties()
         })
     }
     renderProperties()
@@ -186,7 +183,6 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
     container.append(
         el("div", { className: "editor-header" }, [back, save]),
         el("div", { className: "editor-grid" }, [
-            reference,
             el("div", { className: "editor-fields" }, [
                 pageSection("Template", [
                     fieldRow("Name", nameInput),
@@ -222,22 +218,10 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
                     }),
                 ]),
             ]),
+            reference,
         ]),
     )
     return container
-}
-
-function moveProperty(
-    template: Template,
-    index: number,
-    direction: number,
-    rerender: () => void,
-): void {
-    const target = index + direction
-    if (target < 0 || target >= template.properties.length) return
-    const [property] = template.properties.splice(index, 1)
-    if (property) template.properties.splice(target, 0, property)
-    rerender()
 }
 
 function referenceGroup(

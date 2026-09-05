@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { DEFAULT_SETTINGS, mergeDefaults } from "../../src/lib/settings-schema"
+import {
+    DEFAULT_INTERPRETER_CONTEXT,
+    DEFAULT_SETTINGS,
+    mergeDefaults,
+} from "../../src/lib/settings-schema"
 import { DEFAULT_TEMPLATE, resolveTemplates } from "../../src/lib/templates"
 import { exportPayload, importSettings } from "../../src/options/state"
 
@@ -12,8 +16,15 @@ describe("interpreter settings", () => {
             selectedModelId: "",
             providers: [],
             models: [],
-            context: "",
+            context: DEFAULT_INTERPRETER_CONTEXT,
         })
+    })
+
+    it("falls back to the default context when stored empty", () => {
+        const merged = mergeDefaults({
+            interpreter: { ...DEFAULT_SETTINGS.interpreter, context: "" },
+        })
+        expect(merged.interpreter.context).toBe(DEFAULT_INTERPRETER_CONTEXT)
     })
 
     it("keeps stored providers and models verbatim", () => {
@@ -22,6 +33,7 @@ describe("interpreter settings", () => {
         const merged = mergeDefaults({
             interpreter: {
                 enabled: true,
+                execOnOpen: false,
                 selectedModelId: "m1",
                 providers,
                 models,
@@ -53,6 +65,7 @@ describe("export / import", () => {
             appearance: { mode: "dark", light: "", dark: "matrix" },
             interpreter: {
                 enabled: true,
+                execOnOpen: true,
                 selectedModelId: "m1",
                 providers: [{ id: "p1", baseUrl: "https://x", apiKey: "" }],
                 models: [],

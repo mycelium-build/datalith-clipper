@@ -48,18 +48,23 @@ describe("DEFAULT_TEMPLATE", () => {
         expect(rendered.tags).toBe("clips")
     })
 
-    it("renders content with image, selection and separator", async () => {
+    it("renders the prompt via the interpreter, then image, selection and separator", async () => {
         const rendered = await renderTemplate(DEFAULT_TEMPLATE.content, {
             variables: { ...CONTEXT },
+            interpreter: async (prompt) => `<${prompt}>`,
         })
-        expect(rendered).toBe("![[https://cdn.example.com/cover.jpg]]\npicked\n\n---\nBody text")
+        expect(rendered).toBe(
+            "<sumarize the page>\n\n" +
+                "![[https://cdn.example.com/cover.jpg]]\n\n" +
+                "picked\n\n\n\n---\n\nBody text",
+        )
     })
 
-    it("omits image, selection and separator when absent", async () => {
+    it("keeps prompts as plain text when no interpreter is set", async () => {
         const rendered = await renderTemplate(DEFAULT_TEMPLATE.content, {
             variables: { ...CONTEXT, image: "", selection: "", highlights: [] },
         })
-        expect(rendered).toBe("\n\n\n\nBody text")
+        expect(rendered).toBe("sumarize the page\n\n\n\n\n\n\n\n\n\nBody text")
     })
 
     it("renders highlights as blockquote-free text lines", async () => {

@@ -7,6 +7,10 @@ export interface RenderOptions {
     variables: Record<string, unknown>
     resolveSelector?: (query: string, attr?: string) => string[]
     interpreter?: (prompt: string) => Promise<string>
+    /** Variable names whose interpolations stay in the source, unresolved. */
+    deferred?: string[]
+    /** Prompt expressions stay in the source instead of rendering. */
+    keepPrompts?: boolean
 }
 
 export async function renderTemplate(source: string, options: RenderOptions): Promise<string> {
@@ -36,8 +40,10 @@ async function renderNode(
         case "text":
             return node.value
         case "expr":
+            if (node.raw && isDeferred(node.expr, options)) return node.raw
             return stringify(evaluate(node.expr, scopes, options))
         case "prompt":
+            if (options.keepPrompts && node.raw) return node.raw
             return options.interpreter ? options.interpreter(node.text) : node.text
         case "if": {
             for (const branch of node.branches) {
@@ -71,6 +77,29 @@ async function renderNode(
             if (top) top[node.name] = value
             return ""
         }
+    }
+}
+
+function isDeferred(expr: Expr, options: RenderOptions): boolean {
+    if (!options.deferred || options.deferred.length === 0) return false
+    const root = rootVariableName(expr)
+    return root !== null && options.deferred.includes(root)
+}
+
+function rootVariableName(expr: Expr): string | null {
+    switch (expr.kind) {
+        case "variable": {
+            const [first] = expr.path
+            return typeof first === "string" ? first : null
+        }
+        case "pipe":
+            return rootVariableName(expr.operand)
+        case "unary":
+            return rootVariableName(expr.operand)
+        case "binary":
+            return rootVariableName(expr.left)
+        default:
+            return null
     }
 }
 

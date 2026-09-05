@@ -119,23 +119,25 @@ export class Panel {
         const renderOptions: RenderOptions = { variables }
         this.renderOptions = renderOptions
         this.applyInterpreter(renderOptions, template)
-        const draft: DraftState = {
+        const draft = this.draftOptions()
+        if (!draft) return
+        const state: DraftState = {
             template,
             context,
-            title: await renderTemplate(template.noteName, renderOptions),
-            folder: await renderTemplate(template.noteFolder, renderOptions),
-            content: await renderTemplate(template.content, renderOptions),
+            title: await renderTemplate(template.noteName, draft),
+            folder: await renderTemplate(template.noteFolder, draft),
+            content: await renderTemplate(template.content, draft),
             properties: [],
             vault: "",
         }
-        draft.properties = await Promise.all(
+        state.properties = await Promise.all(
             template.properties.map(async (property) => ({
                 name: property.name,
-                value: await renderTemplate(property.value, renderOptions),
+                value: await renderTemplate(property.value, draft),
             })),
         )
-        draft.vault = template.vault === LAST_USED_VAULT ? settings.lastUsed.vault : template.vault
-        this.state = draft
+        state.vault = template.vault === LAST_USED_VAULT ? settings.lastUsed.vault : template.vault
+        this.state = state
         this.populate()
         this.root.classList.remove("is-loading")
         this.refreshVaults(settings)
@@ -154,13 +156,34 @@ export class Panel {
         options.interpreter = interpreterConfig ? createCompleter(interpreterConfig) : undefined
     }
 
+    /** Draft renders keep `{{highlights}}` and `{"prompt"}` in the editable text. */
+    private draftOptions(): RenderOptions | null {
+        const options = this.renderOptions
+        if (!options) return null
+        return { variables: options.variables, deferred: ["highlights"], keepPrompts: true }
+    }
+
+    /** Preview resolves highlights. */
+    private previewOptions(): RenderOptions | null {
+        const options = this.renderOptions
+        if (!options) return null
+        return { variables: options.variables, keepPrompts: true }
+    }
+
+    /** Save resolves everything: deferred variables and prompts. */
+    private saveOptions(): RenderOptions | null {
+        const options = this.renderOptions
+        if (!options) return null
+        return { variables: options.variables, interpreter: options.interpreter }
+    }
+
     private async switchTemplate(template: Template): Promise<void> {
         const state = this.state
-        const options = this.renderOptions
+        const options = this.draftOptions()
         if (!state || !options) return
         state.template = template
         options.variables.highlights = state.context.highlights
-        this.applyInterpreter(options, template)
+        this.applyInterpreter(this.renderOptions as RenderOptions, template)
         state.title = await renderTemplate(template.noteName, options)
         state.folder = await renderTemplate(template.noteFolder, options)
         state.content = await renderTemplate(template.content, options)
@@ -275,24 +298,20 @@ export class Panel {
         this.setStatus(on ? "Highlighter on — paint text on the page" : "", on ? "muted" : "")
     }
 
-    private async appendHighlight(text: string): Promise<void> {
+    private appendHighlight(text: string): void {
         const state = this.state
         if (!state) return
         state.context.highlights.push(text)
         const options = this.renderOptions
         if (options) options.variables.highlights = state.context.highlights
-        if (!this.contentDirty) {
-            // The template owns the content, so {{highlights}} stays where it is.
-            state.content = await renderTemplate(
-                state.template.content,
-                options ?? { variables: {} },
-            )
-        } else {
+        if (this.contentDirty) {
+            // The user owns the content, so quote the highlight at the end.
             const quoted = text.split("\n").join("\n> ")
             const base = state.content.trimEnd()
             state.content = base === "" ? `> ${quoted}` : `${base}\n\n> ${quoted}`
+            this.contentInput.value = state.content
         }
-        this.contentInput.value = state.content
+        // Otherwise the template owns the content and its {{highlights}} stays.
         this.renderVariablesTable()
         this.setStatus(`Highlight added (${state.context.highlights.length})`, "muted")
     }
@@ -598,12 +617,15 @@ export class Panel {
         this.previewTab.classList.toggle("is-active", preview)
         this.previewPane.hidden = !preview
         this.contentInput.hidden = preview
-        if (preview) {
-            const html = marked.parse(renderWikilinkEmbeds(this.contentInput.value), {
-                async: false,
-            })
-            this.previewPane.innerHTML = DOMPurify.sanitize(html)
-        }
+        if (preview) void this.renderPreview()
+    }
+
+    private async renderPreview(): Promise<void> {
+        const options = this.previewOptions()
+        if (!options) return
+        const resolved = await renderTemplate(this.contentInput.value, options)
+        const html = marked.parse(renderWikilinkEmbeds(resolved), { async: false })
+        this.previewPane.innerHTML = DOMPurify.sanitize(html)
     }
 
     private toggleVariables(open: boolean): void {
@@ -674,19 +696,26 @@ export class Panel {
         }
         this.saveButton.disabled = true
         this.setStatus("Saving…")
-        const properties: Record<string, string> = {}
-        for (const property of state.properties) {
-            if (property.name.trim() !== "") properties[property.name.trim()] = property.value
+        const options = this.saveOptions()
+        if (!options) return
+        const properties = await Promise.all(
+            state.properties
+                .filter((property) => property.name.trim() !== "")
+                .map(async (property) => ({
+                    name: property.name.trim(),
+                    value: await renderTemplate(property.value, options),
+                })),
+        )
+        const note = {
+            vault: state.vault,
+            name: await renderTemplate(state.title, options),
+            folder: await renderTemplate(state.folder, options),
+            properties: Object.fromEntries(properties.map((p) => [p.name, p.value])),
+            content: await renderTemplate(state.content, options),
         }
         const response = (await browser.runtime.sendMessage({
             type: "save-clip",
-            note: {
-                vault: state.vault,
-                name: state.title,
-                folder: state.folder,
-                properties,
-                content: state.content,
-            },
+            note,
         })) as SaveResponse
         this.saveButton.disabled = false
         if (!response.ok) {

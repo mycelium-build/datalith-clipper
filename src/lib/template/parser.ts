@@ -11,8 +11,8 @@ export type Expr =
 
 export type Node =
     | { kind: "text"; value: string }
-    | { kind: "expr"; expr: Expr }
-    | { kind: "prompt"; text: string }
+    | { kind: "expr"; expr: Expr; raw: string }
+    | { kind: "prompt"; text: string; raw: string }
     | { kind: "if"; branches: Array<{ condition: Expr | null; body: Node[] }> }
     | { kind: "for"; name: string; iterable: Expr; body: Node[] }
     | { kind: "set"; name: string; value: Expr }
@@ -49,15 +49,20 @@ export function parseTemplate(source: string): Node[] {
         }
         position = tag.end
         if (tag.type === "prompt") {
-            append(stack, { kind: "prompt", text: tag.inner })
+            append(stack, {
+                kind: "prompt",
+                text: tag.inner,
+                raw: source.slice(tag.start, tag.end),
+            })
             continue
         }
         if (tag.type === "expr") {
             const inner = tag.inner.trim()
+            const raw = source.slice(tag.start, tag.end)
             if (inner.startsWith("selector:")) {
-                append(stack, { kind: "expr", expr: parseSelector(inner) })
+                append(stack, { kind: "expr", expr: parseSelector(inner), raw })
             } else {
-                append(stack, { kind: "expr", expr: parseExpression(inner) })
+                append(stack, { kind: "expr", expr: parseExpression(inner), raw })
             }
             continue
         }

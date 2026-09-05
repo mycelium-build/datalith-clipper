@@ -1,5 +1,5 @@
 /* oxlint-disable no-await-in-loop */
-import { copyFile, mkdir, readdir, rm, stat } from "node:fs/promises"
+import { copyFile, mkdir, readFile, readdir, rm, stat } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -47,12 +47,29 @@ for (const { from, to } of copies) {
     copiedCount += await copyTree(sourcePath, destinationPath)
 }
 
-const logoSource = path.join(sourceRoot, "assets", "logo", "datalith.png")
+const clipperSource = path.join(sourceRoot, "assets", "icons", "clipper.svg")
 const iconsDestination = path.join(siteRoot, "public", "icons")
 await mkdir(iconsDestination, { recursive: true })
-for (const size of [16, 48, 128]) {
-    await sharp(logoSource)
-        .resize(size, size, { kernel: "nearest" })
+const ACCENT = "#1e8dff"
+const clipperSvg = (await readFile(clipperSource, "utf8")).replaceAll(
+    'fill="currentColor"',
+    `fill="${ACCENT}"`,
+)
+for (const [size, cells, pad] of [
+    [16, 2, 1],
+    [48, 6, 3],
+    [128, 18, 1],
+] as const) {
+    const inner = cells * 7
+    await sharp(Buffer.from(clipperSvg))
+        .resize(inner, inner, { kernel: "nearest" })
+        .extend({
+            top: pad,
+            bottom: pad,
+            left: pad,
+            right: pad,
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
         .toFile(path.join(iconsDestination, `icon-${size}.png`))
 }
 console.log(`Synced ${copiedCount} asset files and the extension icons from ${sourceRoot}`)

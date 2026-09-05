@@ -22,7 +22,9 @@ function settingsWithInterpreter(enabled: boolean) {
             enabled,
             execOnOpen: false,
             selectedModelId: "m1",
-            providers: [{ id: "p1", baseUrl: "https://api.example.com/v1", apiKey: "sk-1" }],
+            providers: [
+                { id: "p1", name: "Test", baseUrl: "https://api.example.com/v1", apiKey: "sk-1" },
+            ],
             models: [{ id: "m1", name: "Test", modelId: "test-model", providerId: "p1" }],
             context: "global context",
         },

@@ -28,7 +28,9 @@ describe("interpreter settings", () => {
     })
 
     it("keeps stored providers and models verbatim", () => {
-        const providers = [{ id: "p1", baseUrl: "https://api.example.com/v1", apiKey: "sk-1" }]
+        const providers = [
+            { id: "p1", name: "Test", baseUrl: "https://api.example.com/v1", apiKey: "sk-1" },
+        ]
         const models = [{ id: "m1", name: "Test", modelId: "test-model", providerId: "p1" }]
         const merged = mergeDefaults({
             interpreter: {
@@ -67,7 +69,7 @@ describe("export / import", () => {
                 enabled: true,
                 execOnOpen: true,
                 selectedModelId: "m1",
-                providers: [{ id: "p1", baseUrl: "https://x", apiKey: "" }],
+                providers: [{ id: "p1", name: "Local", baseUrl: "https://x", apiKey: "" }],
                 models: [],
                 context: "be brief",
             },

@@ -20,6 +20,7 @@ function settingsWithInterpreter(enabled: boolean) {
     return mergeDefaults({
         interpreter: {
             enabled,
+            execOnOpen: false,
             selectedModelId: "m1",
             providers: [{ id: "p1", baseUrl: "https://api.example.com/v1", apiKey: "sk-1" }],
             models: [{ id: "m1", name: "Test", modelId: "test-model", providerId: "p1" }],
@@ -142,5 +143,43 @@ describe("createCompleter", () => {
         }))
         const complete = createCompleter(CONFIG, send)
         expect(await complete("prompt")).toBe("prompt")
+    })
+
+    it("resolves the system context per call", async () => {
+        const send = vi.fn(async (config: InterpreterConfig): Promise<InterpreterResponse> => ({
+            ok: true,
+            content: config.context,
+        }))
+        let pageContent = "first"
+        const complete = createCompleter(CONFIG, send, async () => `Page: ${pageContent}`)
+        expect(await complete("p")).toBe("Page: first")
+        pageContent = "second"
+        expect(await complete("p")).toBe("Page: second")
+    })
+
+    it("caches per resolved context", async () => {
+        const send = vi.fn(async (config: InterpreterConfig): Promise<InterpreterResponse> => ({
+            ok: true,
+            content: config.context,
+        }))
+        let pageContent = "a"
+        const complete = createCompleter(CONFIG, send, async () => `Page: ${pageContent}`)
+        expect(await complete("p")).toBe("Page: a")
+        expect(await complete("p")).toBe("Page: a")
+        expect(send).toHaveBeenCalledTimes(1)
+        pageContent = "b"
+        expect(await complete("p")).toBe("Page: b")
+        expect(send).toHaveBeenCalledTimes(2)
+    })
+
+    it("falls back to the raw context when resolution fails", async () => {
+        const send = vi.fn(async (config: InterpreterConfig): Promise<InterpreterResponse> => ({
+            ok: true,
+            content: config.context,
+        }))
+        const complete = createCompleter(CONFIG, send, async () => {
+            throw new Error("nope")
+        })
+        expect(await complete("p")).toBe("Be brief")
     })
 })

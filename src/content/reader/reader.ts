@@ -15,6 +15,7 @@ class Reader {
     private host: HTMLElement
     private shadow: ShadowRoot
     private root: HTMLDivElement
+    private listeners = new AbortController()
 
     private constructor(host: HTMLElement, settings: ClipperSettings, title: string, html: string) {
         this.host = host
@@ -23,6 +24,8 @@ class Reader {
         const style = document.createElement("style")
         style.textContent = `${themesCss}\n${readerCss}`
         const root = el("div", { className: "reader-root", dataset: { datalithTheme: theme.id } })
+        const article = el("div", { className: "reader-article" })
+        article.innerHTML = DOMPurify.sanitize(html)
         root.append(
             el("div", { className: "reader-header" }, [
                 el("span", { className: "reader-title", text: title || "Reader" }),
@@ -36,21 +39,20 @@ class Reader {
                     [icon("close")],
                 ),
             ]),
-            el("div", { className: "reader-scroll" }, [
-                el("div", {
-                    className: "reader-article",
-                    attributes: { innerHTML: DOMPurify.sanitize(html) },
-                }),
-            ]),
+            el("div", { className: "reader-scroll" }, [article]),
         )
         for (const [name, value] of Object.entries(readerStyleVars(settings))) {
             root.style.setProperty(name, value)
         }
         this.root = root
         this.shadow.replaceChildren(style, root)
-        this.shadow.addEventListener("keydown", (event) => {
-            if ((event as KeyboardEvent).key === "Escape") Reader.close()
-        })
+        this.shadow.addEventListener(
+            "keydown",
+            (event) => {
+                if ((event as KeyboardEvent).key === "Escape") Reader.close()
+            },
+            { signal: this.listeners.signal },
+        )
     }
 
     static async toggle(): Promise<void> {
@@ -71,8 +73,9 @@ class Reader {
 
     static close(): void {
         if (!Reader.current) return
+        Reader.current.listeners.abort()
         Reader.current.host.dataset.readerOpen = "false"
-        Reader.current.host.replaceChildren()
+        Reader.current.shadow.replaceChildren()
         Reader.current = null
     }
 }

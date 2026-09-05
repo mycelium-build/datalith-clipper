@@ -5,12 +5,11 @@ export function pageSection(title: string, children: Array<Node | string>): HTML
 }
 
 export function fieldRow(label: string, control: HTMLElement, description?: string): HTMLElement {
-    const children: Array<Node | string> = [
+    const text = el("div", { className: "field-text" }, [
         el("label", { className: "field-label", text: label }),
-        control,
-    ]
-    if (description) children.push(el("div", { className: "field-description", text: description }))
-    return el("div", { className: "field-row" }, children)
+    ])
+    if (description) text.append(el("div", { className: "field-description", text: description }))
+    return el("div", { className: "field-row" }, [text, control])
 }
 
 export function toggleInput(

@@ -1,4 +1,5 @@
 import { mergeDefaults, type ClipperSettings } from "../lib/settings-schema"
+import { DEFAULT_TEMPLATES, type Template } from "../lib/templates"
 
 export interface OptionsState {
     settings: ClipperSettings
@@ -26,4 +27,11 @@ export function exportPayload(state: OptionsState): string {
 
 export function uniqueId(prefix: string): string {
     return `${prefix}-${crypto.randomUUID?.() ?? Date.now().toString(36)}`
+}
+
+export function ensureStoredTemplates(ctx: PageContext): Template[] {
+    if (ctx.state.settings.templates.length === 0) {
+        ctx.state.settings.templates = structuredClone(DEFAULT_TEMPLATES)
+    }
+    return ctx.state.settings.templates
 }

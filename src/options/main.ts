@@ -1,18 +1,14 @@
 import { el, icon } from "../lib/dom"
 import { loadSettings, saveSettings } from "../lib/settings"
 import { resolveTheme } from "../lib/settings-schema"
+import { newTemplate } from "../lib/templates"
+import { dragHandle, makeSortable } from "./dnd"
 import { renderGeneral } from "./pages/general"
 import { renderInterpreter } from "./pages/interpreter"
 import { renderReader } from "./pages/reader"
 import { renderTemplateEditor } from "./pages/template-editor"
-import { ensureStoredTemplates, renderTemplates } from "./pages/templates"
 import type { OptionsState, PageContext } from "./state"
-
-const NAV_ITEMS: Array<{ hash: string; label: string; icon: string }> = [
-    { hash: "#general", label: "General", icon: "gear" },
-    { hash: "#reader", label: "Reader", icon: "eye" },
-    { hash: "#interpreter", label: "Interpreter", icon: "bolt" },
-]
+import { ensureStoredTemplates } from "./state"
 
 let state: OptionsState | null = null
 
@@ -40,48 +36,111 @@ const ctx: PageContext = {
     },
 }
 
+function brand(): HTMLElement {
+    return el("div", { className: "brand" }, [
+        icon("clipper", "brand-mark"),
+        el("h1", { text: "Settings" }),
+    ])
+}
+
+function navLink(
+    item: { hash: string; label: string; icon: string },
+    current: string,
+): HTMLElement {
+    return el(
+        "a",
+        {
+            className: `nav-item${current === item.hash ? " is-active" : ""}`,
+            attributes: { href: item.hash },
+        },
+        [icon(item.icon), document.createTextNode(item.label)],
+    )
+}
+
+function templateNavLink(templateId: string, name: string, current: string): HTMLElement {
+    const item = el(
+        "a",
+        {
+            className: `nav-item nav-template${current === `#template/${templateId}` ? " is-active" : ""}`,
+            attributes: { href: `#template/${templateId}` },
+        },
+        [
+            dragHandle("Drag to reorder"),
+            el("span", { className: "nav-label", text: name }),
+            el("span", { className: "spacer" }),
+            el("span", { className: "nav-item-actions" }, [
+                el(
+                    "button",
+                    {
+                        className: "icon-button",
+                        attributes: { type: "button", title: "Delete template" },
+                        events: {
+                            click: (event) => {
+                                event.preventDefault()
+                                event.stopPropagation()
+                                const templates = ctx.state.settings.templates
+                                if (templateId === "default") return
+                                ctx.state.settings.templates = templates.filter(
+                                    (candidate) => candidate.id !== templateId,
+                                )
+                                if (location.hash === `#template/${templateId}`) {
+                                    ctx.navigate("#general")
+                                }
+                                void ctx.save()
+                            },
+                        },
+                    },
+                    [icon("close")],
+                ),
+            ]),
+        ],
+    )
+    return item
+}
+
 function renderSidebar(): void {
     const sidebar = document.querySelector<HTMLElement>(".sidebar")
     if (!sidebar || !state) return
     const templates = ensureStoredTemplates(ctx)
     const current = location.hash || "#general"
-    const nav = el("nav", {}, [
-        ...NAV_ITEMS.map((item) =>
-            el(
-                "a",
-                {
-                    className: `nav-item${current === item.hash ? " is-active" : ""}`,
-                    text: item.label,
-                    attributes: { href: item.hash },
-                },
-                [icon(item.icon), document.createTextNode(item.label)],
-            ),
-        ),
-        el("div", { className: "nav-section", text: "Templates" }),
-        ...templates.map((template) =>
-            el(
-                "a",
-                {
-                    className: `nav-item${current === `#template/${template.id}` ? " is-active" : ""}`,
-                    attributes: { href: `#template/${template.id}` },
-                },
-                [icon("note"), document.createTextNode(template.name)],
-            ),
-        ),
+    const templateList = el("div", { className: "nav-templates" })
+    for (const template of templates) {
+        templateList.append(templateNavLink(template.id, template.name, current))
+    }
+    templateList.append(
         el(
-            "a",
+            "button",
             {
-                className: `nav-item${current === "#templates" ? " is-active" : ""}`,
-                attributes: { href: "#templates" },
+                className: "nav-item nav-add",
+                attributes: { type: "button" },
+                events: {
+                    click: () => {
+                        const list = ensureStoredTemplates(ctx)
+                        const template = newTemplate()
+                        list.push(template)
+                        void ctx.save()
+                        ctx.navigate(`#template/${template.id}`)
+                    },
+                },
             },
-            [icon("plus"), document.createTextNode("Manage")],
+            [icon("plus"), document.createTextNode("Add template")],
         ),
+    )
+    makeSortable(templateList, (from, to) => {
+        const list = ctx.state.settings.templates
+        const [moved] = list.splice(from, 1)
+        if (moved) list.splice(to, 0, moved)
+        void ctx.save()
+        if (location.hash.startsWith("#template/")) renderRoute()
+    })
+    const nav = el("nav", {}, [
+        navLink({ hash: "#general", label: "General", icon: "gear" }, current),
+        navLink({ hash: "#reader", label: "Reader", icon: "eye" }, current),
+        navLink({ hash: "#interpreter", label: "Interpreter", icon: "bolt" }, current),
+        el("div", { className: "nav-section", text: "Templates" }),
+        templateList,
     ])
-    const brand = el("div", { className: "brand" }, [
-        el("span", { className: "brand-mark", text: "◆" }),
-        el("h1", { text: "Settings" }),
-    ])
-    sidebar.replaceChildren(brand, nav)
+    sidebar.replaceChildren(brand(), nav)
 }
 
 function renderRoute(): void {
@@ -96,8 +155,6 @@ function renderRoute(): void {
         page = renderReader(ctx)
     } else if (hash === "#interpreter") {
         page = renderInterpreter(ctx)
-    } else if (hash === "#templates") {
-        page = renderTemplates(ctx)
     } else {
         page = renderGeneral(ctx)
     }

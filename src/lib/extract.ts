@@ -1,4 +1,4 @@
-import Defuddle from "defuddle"
+import Defuddle from "defuddle/full"
 
 import type { ClipContext, DefuddleParseResult } from "../shared/variables"
 import { pickImage } from "./image"
@@ -18,7 +18,7 @@ export function captureContext(
     const base = clone.createElement("base")
     base.setAttribute("href", url)
     clone.head.prepend(base)
-    const parsed = new Defuddle(clone, { markdown: true }).parse() as DefuddleParseResult
+    const parsed = new Defuddle(clone, { markdown: true, url }).parse() as DefuddleParseResult
     return buildContext(doc, url, parsed, extras)
 }
 

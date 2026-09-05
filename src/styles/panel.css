@@ -5,6 +5,10 @@
     width: 420px;
     z-index: 2147483647;
     color-scheme: light dark;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+
     font-family:
         system-ui,
         -apple-system,
@@ -43,6 +47,7 @@
     align-items: center;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     box-shadow: -2px 2px 8px rgb(0 0 0 / 20%);
     display: none;
     gap: 2px;
@@ -68,6 +73,7 @@
 .template-select {
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     color: var(--dl-fg);
     flex: 1;
     font-size: 12px;
@@ -84,6 +90,7 @@
     align-items: center;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     color: var(--dl-fg);
     cursor: pointer;
     display: inline-flex;
@@ -192,6 +199,7 @@
     input {
         background: var(--dl-surface);
         border: 1px solid var(--dl-border);
+        border-radius: var(--radius-sm);
         color: var(--dl-fg);
         font-size: 12px;
         padding: 3px 4px;
@@ -266,6 +274,7 @@
     background: none;
     border: 1px solid transparent;
     border-bottom: none;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
     color: var(--dl-muted);
     cursor: pointer;
     font-size: 11px;
@@ -304,7 +313,19 @@
     padding: 8px;
 
     img {
+        border-radius: var(--radius-sm);
         max-width: 100%;
+    }
+
+    .wikilink-embed {
+        background: var(--dl-surface-alt);
+        border: 1px solid var(--dl-border);
+        border-radius: var(--radius-sm);
+        color: var(--dl-muted);
+        display: inline-block;
+        font-family: var(--font-mono, ui-monospace, monospace);
+        font-size: 0.85em;
+        padding: 0 4px;
     }
 
     pre {
@@ -344,6 +365,7 @@
 .folder-input {
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     color: var(--dl-fg);
     font-size: 12px;
     min-width: 0;
@@ -361,6 +383,7 @@
 .save-button {
     background: var(--dl-accent);
     border: 1px solid var(--dl-accent);
+    border-radius: var(--radius-sm);
     color: var(--dl-accent-fg);
     cursor: pointer;
     font-family: var(--font-pixel, "Pixeloid Sans", monospace);
@@ -414,12 +437,14 @@
 .variables-panel {
     background: var(--dl-bg);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md);
     box-shadow: 0 4px 16px rgb(0 0 0 / 30%);
     display: flex;
     flex-direction: column;
     inset: 16px;
     max-height: calc(100% - 32px);
     max-width: calc(100% - 32px);
+    overflow: hidden;
     position: absolute;
 }
 

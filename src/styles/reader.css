@@ -46,6 +46,7 @@
     align-items: center;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
+    border-radius: 4px;
     color: var(--dl-fg);
     cursor: pointer;
     display: inline-flex;

@@ -12,7 +12,7 @@
     gap: var(--space-6);
     min-height: 100vh;
     overflow-y: auto;
-    padding: var(--space-6) var(--space-4);
+    padding: var(--space-6) var(--space-4) var(--space-6) 1.5rem;
     position: sticky;
     top: 0;
     width: 16rem;
@@ -26,7 +26,13 @@
 
 .brand-mark {
     color: var(--dl-logo-1);
-    font-family: var(--font-pixel);
+    display: inline-flex;
+    line-height: 0;
+
+    svg {
+        height: 1.5rem;
+        width: 1.5rem;
+    }
 }
 
 .brand h1 {
@@ -36,11 +42,14 @@
 .nav-item {
     align-items: center;
     border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
     color: var(--dl-fg);
     display: flex;
     font-size: 0.875rem;
     gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
+    height: 2.25rem;
+    padding: 0 var(--space-3);
     text-decoration: none;
 
     &:hover {
@@ -54,6 +63,64 @@
 
     .icon {
         color: var(--dl-muted);
+    }
+}
+
+.nav-templates {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.nav-template {
+    position: relative;
+
+    .drag-handle {
+        position: absolute;
+        left: -1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+}
+
+.nav-item {
+    .nav-item-actions {
+        display: none;
+        position: absolute;
+        right: var(--space-2);
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .spacer {
+        flex: 1;
+    }
+}
+
+.nav-template:hover .nav-item-actions,
+.nav-template:focus-within .nav-item-actions {
+    display: inline-flex;
+}
+
+.nav-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nav-add {
+    background: none;
+    border-style: dashed;
+    color: var(--dl-fg);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.875rem;
+    text-align: left;
+
+    &:hover {
+        background: transparent;
+        border-color: var(--dl-accent);
     }
 }
 
@@ -94,22 +161,32 @@
     margin-bottom: var(--space-3);
 }
 
+.field-text {
+    display: flex;
+    flex: 0 0 13rem;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
 .field-label {
     color: var(--dl-muted);
-    flex: 0 0 12rem;
     font-size: 0.875rem;
 }
 
 .field-description {
     color: var(--dl-muted);
-    flex-basis: 100%;
     font-size: 0.75rem;
-    margin-left: calc(12rem + var(--space-3));
+}
+
+.vault-select {
+    flex: 1;
 }
 
 .text-input {
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     color: var(--dl-fg);
     flex: 1 1 auto;
     font-family: inherit;
@@ -128,6 +205,15 @@ textarea.text-input {
     line-height: 1.5;
     resize: vertical;
     width: 100%;
+}
+
+.field-row:has(> textarea.text-input) {
+    align-items: stretch;
+    flex-direction: column;
+
+    .field-text {
+        flex-basis: auto;
+    }
 }
 
 .toggle-input {
@@ -157,6 +243,7 @@ input[type="range"] {
 .action-button {
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     color: var(--dl-fg);
     cursor: pointer;
     font-family: var(--font-pixel);
@@ -186,6 +273,7 @@ input[type="range"] {
     align-items: center;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     color: var(--dl-fg);
     cursor: pointer;
     display: inline-flex;
@@ -201,6 +289,32 @@ input[type="range"] {
     &:active {
         transform: translate(1px, 1px);
     }
+
+    &.is-selected-model {
+        border-color: var(--dl-green);
+        color: var(--dl-green);
+    }
+}
+
+.drag-handle {
+    color: var(--dl-muted);
+    cursor: grab;
+    display: inline-flex;
+    flex: none;
+    line-height: 0;
+
+    svg {
+        height: 1em;
+        width: 1em;
+    }
+
+    &:active {
+        cursor: grabbing;
+    }
+}
+
+.is-dragging {
+    opacity: 0.4;
 }
 
 .icon {
@@ -221,7 +335,9 @@ input[type="range"] {
 
 .list-card {
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md);
     margin-bottom: var(--space-3);
+    margin-left: 1.75rem;
     width: 100%;
 }
 
@@ -229,21 +345,41 @@ input[type="range"] {
     align-items: center;
     border-bottom: 1px solid var(--dl-border);
     display: flex;
-    gap: var(--space-3);
-    justify-content: space-between;
+    gap: var(--space-2);
+    justify-content: flex-start;
     padding: var(--space-2) var(--space-3);
+    position: relative;
 
     &:last-child {
         border-bottom: none;
+        border-bottom-left-radius: var(--radius-md);
+        border-bottom-right-radius: var(--radius-md);
+    }
+
+    &:first-child {
+        border-top-left-radius: var(--radius-md);
+        border-top-right-radius: var(--radius-md);
     }
 
     &:hover {
         background: var(--dl-surface-alt);
     }
+
+    .drag-handle {
+        position: absolute;
+        left: -1.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    &.is-selected .list-title {
+        color: var(--dl-green);
+    }
 }
 
 .list-text {
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 2px;
     min-width: 0;
@@ -291,6 +427,7 @@ a.list-title:hover {
 .hotkey {
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
     font-family: var(--font-mono);
     font-size: 0.75rem;
     padding: 2px var(--space-2);
@@ -298,6 +435,7 @@ a.list-title:hover {
 
 .reader-preview {
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md);
     max-height: 18rem;
     overflow-y: auto;
     padding: var(--space-6);
@@ -338,6 +476,7 @@ a.list-title:hover {
 .popup-dialog {
     background: var(--dl-bg);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md);
     color: var(--dl-fg);
     min-width: 24rem;
     padding: var(--space-6);
@@ -353,10 +492,13 @@ a.list-title:hover {
 
     .field-row {
         flex-direction: column;
+        gap: var(--space-2);
+    }
 
-        .field-label {
-            flex: none;
-        }
+    .field-text {
+        align-items: center;
+        flex-basis: auto;
+        text-align: center;
     }
 
     .text-input {
@@ -382,6 +524,7 @@ a.list-title:hover {
     .editor-grid {
         align-items: start;
         display: flex;
+        flex-wrap: wrap;
         gap: var(--space-6);
     }
 }
@@ -389,6 +532,7 @@ a.list-title:hover {
 .template-reference {
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md);
     flex: none;
     max-height: calc(100vh - 8rem);
     overflow-y: auto;
@@ -433,14 +577,24 @@ a.list-title:hover {
     min-width: 0;
 }
 
+.property-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+
 .property-edit-row {
     align-items: center;
     display: flex;
-    flex: 1;
     flex-wrap: wrap;
     gap: var(--space-2);
 
     .text-input {
         flex: 1 1 12rem;
+    }
+
+    .icon-button {
+        flex: none;
     }
 }

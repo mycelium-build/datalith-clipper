@@ -33,6 +33,14 @@ export function renderInterpreter(ctx: PageContext): HTMLElement {
                 }),
                 'Evaluates {"prompt"} expressions in templates with the selected model.',
             ),
+            fieldRow(
+                "Execute when panel opens",
+                toggleInput(interpreter.execOnOpen, (value) => {
+                    interpreter.execOnOpen = value
+                    ctx.save()
+                }),
+                "Runs prompts as soon as the panel opens instead of when saving.",
+            ),
             fieldRow("Model use", buildModelSelect(ctx)),
         ]),
     )

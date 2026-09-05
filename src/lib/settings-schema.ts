@@ -19,6 +19,7 @@ export interface InterpreterModel {
 
 export interface InterpreterSettings {
     enabled: boolean
+    execOnOpen: boolean
     selectedModelId: string
     providers: InterpreterProvider[]
     models: InterpreterModel[]
@@ -93,6 +94,7 @@ export const DEFAULT_SETTINGS: ClipperSettings = {
     reader: { ...READER_DEFAULTS },
     interpreter: {
         enabled: false,
+        execOnOpen: false,
         selectedModelId: "",
         providers: [],
         models: [],
@@ -139,6 +141,7 @@ export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): Cli
         },
         interpreter: {
             enabled: stored.interpreter?.enabled ?? defaults.interpreter.enabled,
+            execOnOpen: stored.interpreter?.execOnOpen ?? defaults.interpreter.execOnOpen,
             selectedModelId:
                 stored.interpreter?.selectedModelId ?? defaults.interpreter.selectedModelId,
             providers: stored.interpreter?.providers ?? defaults.interpreter.providers,

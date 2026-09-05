@@ -156,11 +156,17 @@ export class Panel {
         options.interpreter = interpreterConfig ? createCompleter(interpreterConfig) : undefined
     }
 
-    /** Draft renders keep `{{highlights}}` and `{"prompt"}` in the editable text. */
+    /** Draft renders keep `{{highlights}}` (and `{"prompt"}` unless exec-on-open). */
     private draftOptions(): RenderOptions | null {
         const options = this.renderOptions
         if (!options) return null
-        return { variables: options.variables, deferred: ["highlights"], keepPrompts: true }
+        const execOnOpen = this.settings?.interpreter.execOnOpen === true
+        return {
+            variables: options.variables,
+            deferred: ["highlights"],
+            keepPrompts: !execOnOpen,
+            interpreter: execOnOpen ? options.interpreter : undefined,
+        }
     }
 
     /** Preview resolves highlights. */

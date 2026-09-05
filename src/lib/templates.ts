@@ -29,7 +29,7 @@ export const DEFAULT_TEMPLATE: Template = {
         { name: "tags", value: "clips" },
     ],
     content:
-        '{"sumarize the page"}\n\n' +
+        '{"short sumary of the page, like 3 sentences, just output the summary"}\n\n' +
         "{% if image %}![[{{image}}]]{% endif %}\n\n" +
         "{{selection}}\n\n" +
         "{{highlights}}\n\n" +

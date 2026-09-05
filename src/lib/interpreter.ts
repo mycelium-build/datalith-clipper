@@ -49,14 +49,24 @@ async function defaultSend(
 export function createCompleter(
     config: InterpreterConfig,
     send: CompleteSender = defaultSend,
+    resolveContext?: () => Promise<string>,
 ): (prompt: string) => Promise<string> {
     const cache = new Map<string, string>()
     return async (prompt) => {
-        const cached = cache.get(prompt)
+        let context = config.context
+        if (resolveContext) {
+            try {
+                context = await resolveContext()
+            } catch {
+                context = config.context
+            }
+        }
+        const key = `${context}\u0000${prompt}`
+        const cached = cache.get(key)
         if (cached !== undefined) return cached
-        const result = await send(config, prompt)
+        const result = await send({ ...config, context }, prompt)
         const content = result.ok ? result.content : prompt
-        cache.set(prompt, content)
+        cache.set(key, content)
         return content
     }
 }

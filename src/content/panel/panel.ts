@@ -153,7 +153,11 @@ export class Panel {
                 "muted",
             )
         }
-        options.interpreter = interpreterConfig ? createCompleter(interpreterConfig) : undefined
+        options.interpreter = interpreterConfig
+            ? createCompleter(interpreterConfig, undefined, async () =>
+                  renderTemplate(interpreterConfig.context, { variables: options.variables }),
+              )
+            : undefined
     }
 
     /** Draft renders keep `{{highlights}}` (and `{"prompt"}` unless exec-on-open). */

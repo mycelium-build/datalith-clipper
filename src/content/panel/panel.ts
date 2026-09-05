@@ -6,6 +6,7 @@ import { el, icon } from "../../lib/dom"
 import { captureContext } from "../../lib/extract"
 import { matchAnyGlob } from "../../lib/glob"
 import { createCompleter, resolveInterpreterConfig } from "../../lib/interpreter"
+import { renderWikilinkEmbeds } from "../../lib/markdown"
 import { loadSettings, saveSettings } from "../../lib/settings"
 import type { ClipperSettings } from "../../lib/settings-schema"
 import { resolveTheme } from "../../lib/settings-schema"
@@ -75,6 +76,9 @@ export class Panel {
     private minimized = false
     private propertiesCollapsed = false
     private templates: Template[] = []
+    private renderOptions: RenderOptions | null = null
+    private contentDirty = false
+    private listeners = new AbortController()
 
     private constructor(host: HTMLElement) {
         this.host = host
@@ -109,20 +113,12 @@ export class Panel {
         this.root.classList.add("is-loading")
         const url = location.href
         const context = captureContext(document, url, { selection, highlights: [] })
-        const templates = resolveTemplates(settings.templates)
-        const template = pickTemplate(templates, url, settings.lastUsed.templateId)
+        this.templates = resolveTemplates(settings.templates)
+        const template = pickTemplate(this.templates, url, settings.lastUsed.templateId)
         const variables: Record<string, unknown> = { ...context }
-        const interpreterConfig = resolveInterpreterConfig(settings, template.context)
-        if (settings.interpreter.enabled && !interpreterConfig) {
-            this.setStatus(
-                "Interpreter is enabled but no model is configured, prompts render as plain text",
-                "muted",
-            )
-        }
-        const renderOptions: RenderOptions = {
-            variables,
-            ...(interpreterConfig ? { interpreter: createCompleter(interpreterConfig) } : {}),
-        }
+        const renderOptions: RenderOptions = { variables }
+        this.renderOptions = renderOptions
+        this.applyInterpreter(renderOptions, template)
         const draft: DraftState = {
             template,
             context,
@@ -145,6 +141,39 @@ export class Panel {
         this.refreshVaults(settings)
     }
 
+    private applyInterpreter(options: RenderOptions, template: Template): void {
+        const settings = this.settings
+        if (!settings) return
+        const interpreterConfig = resolveInterpreterConfig(settings, template.context)
+        if (settings.interpreter.enabled && !interpreterConfig) {
+            this.setStatus(
+                "Interpreter is enabled but no model is configured, prompts render as plain text",
+                "muted",
+            )
+        }
+        options.interpreter = interpreterConfig ? createCompleter(interpreterConfig) : undefined
+    }
+
+    private async switchTemplate(template: Template): Promise<void> {
+        const state = this.state
+        const options = this.renderOptions
+        if (!state || !options) return
+        state.template = template
+        options.variables.highlights = state.context.highlights
+        this.applyInterpreter(options, template)
+        state.title = await renderTemplate(template.noteName, options)
+        state.folder = await renderTemplate(template.noteFolder, options)
+        state.content = await renderTemplate(template.content, options)
+        state.properties = await Promise.all(
+            template.properties.map(async (property) => ({
+                name: property.name,
+                value: await renderTemplate(property.value, options),
+            })),
+        )
+        this.contentDirty = false
+        this.populate()
+    }
+
     private buildDom(): HTMLDivElement {
         const style = document.createElement("style")
         style.textContent = `${themesCss}\n${panelCss}\n${fontFaceCss()}`
@@ -159,18 +188,22 @@ export class Panel {
         this.root = root
         this.buildBody()
         this.buildPill()
-        this.shadow.addEventListener("keydown", (event) => {
-            if ((event as KeyboardEvent).key !== "Escape") return
-            if (this.variablesModal.classList.contains("is-open")) {
-                this.toggleVariables(false)
-                return
-            }
-            if (this.minimized) {
-                this.setMinimized(false)
-                return
-            }
-            this.destroy()
-        })
+        this.shadow.addEventListener(
+            "keydown",
+            (event) => {
+                if ((event as KeyboardEvent).key !== "Escape") return
+                if (this.variablesModal.classList.contains("is-open")) {
+                    this.toggleVariables(false)
+                    return
+                }
+                if (this.minimized) {
+                    this.setMinimized(false)
+                    return
+                }
+                this.destroy()
+            },
+            { signal: this.listeners.signal },
+        )
         return root
     }
 
@@ -193,36 +226,46 @@ export class Panel {
             attributes: { title: "Template" },
             events: {
                 change: () => {
-                    const state = this.state
-                    if (state) state.template.id = select.value
+                    const template = this.templates.find(
+                        (candidate) => candidate.id === select.value,
+                    )
+                    if (template) void this.switchTemplate(template)
                 },
             },
         })
         this.templateSelect = select
-        const buttons: Array<[string, string, () => void]> = [
-            ["columns", "Variables", () => this.toggleVariables(true)],
-            ["pen", "Highlighter", () => this.toggleHighlighter()],
-            ["eye", "Reader", () => toggleReader()],
-            ["gear", "Settings", () => browser.runtime.sendMessage({ type: "open-settings" })],
-            ["chevron-down", "Minimize", () => this.setMinimized(true)],
-            ["close", "Close", () => this.destroy()],
+        const actions: Array<[string, string, string, () => void]> = [
+            ["variables", "columns", "Variables", () => this.toggleVariables(true)],
+            ["highlighter", "pen", "Highlighter", () => this.toggleHighlighter()],
+            ["reader", "eye", "Reader", () => toggleReader()],
+            [
+                "settings",
+                "gear",
+                "Settings",
+                () => browser.runtime.sendMessage({ type: "open-settings" }),
+            ],
+            ["minimize", "chevron-down", "Minimize", () => this.setMinimized(true)],
+            ["close", "close", "Close", () => this.destroy()],
         ]
         const toolbar = el("div", { className: "toolbar" }, [
             select,
             el("span", { className: "spacer" }),
-            ...buttons.map(([name, title, onClick]) =>
+            ...actions.map(([action, iconName, title, onClick]) =>
                 el(
                     "button",
                     {
                         className: "icon-button",
+                        dataset: { action },
                         attributes: { title, type: "button" },
                         events: { click: onClick },
                     },
-                    [icon(name)],
+                    [icon(iconName)],
                 ),
             ),
         ])
-        this.highlighterButton = toolbar.children[2] as HTMLButtonElement
+        this.highlighterButton = toolbar.querySelector<HTMLButtonElement>(
+            'button[data-action="highlighter"]',
+        ) as HTMLButtonElement
         body.append(toolbar)
     }
 
@@ -232,13 +275,23 @@ export class Panel {
         this.setStatus(on ? "Highlighter on — paint text on the page" : "", on ? "muted" : "")
     }
 
-    private appendHighlight(text: string): void {
+    private async appendHighlight(text: string): Promise<void> {
         const state = this.state
         if (!state) return
         state.context.highlights.push(text)
-        const quoted = text.split("\n").join("\n> ")
-        const base = state.content.trimEnd()
-        state.content = base === "" ? `> ${quoted}` : `${base}\n\n> ${quoted}`
+        const options = this.renderOptions
+        if (options) options.variables.highlights = state.context.highlights
+        if (!this.contentDirty) {
+            // The template owns the content, so {{highlights}} stays where it is.
+            state.content = await renderTemplate(
+                state.template.content,
+                options ?? { variables: {} },
+            )
+        } else {
+            const quoted = text.split("\n").join("\n> ")
+            const base = state.content.trimEnd()
+            state.content = base === "" ? `> ${quoted}` : `${base}\n\n> ${quoted}`
+        }
         this.contentInput.value = state.content
         this.renderVariablesTable()
         this.setStatus(`Highlight added (${state.context.highlights.length})`, "muted")
@@ -319,7 +372,12 @@ export class Panel {
         this.contentInput = el("textarea", {
             className: "content-input",
             attributes: { "aria-label": "Note content", spellcheck: "false" },
-            events: { input: () => this.updateDraft({ content: this.contentInput.value }) },
+            events: {
+                input: () => {
+                    this.contentDirty = true
+                    this.updateDraft({ content: this.contentInput.value })
+                },
+            },
         })
         this.previewPane = el("div", { className: "content-preview", attributes: { hidden: "" } })
         body.append(
@@ -541,7 +599,9 @@ export class Panel {
         this.previewPane.hidden = !preview
         this.contentInput.hidden = preview
         if (preview) {
-            const html = marked.parse(this.contentInput.value, { async: false })
+            const html = marked.parse(renderWikilinkEmbeds(this.contentInput.value), {
+                async: false,
+            })
             this.previewPane.innerHTML = DOMPurify.sanitize(html)
         }
     }
@@ -653,8 +713,9 @@ export class Panel {
 
     destroy(): void {
         clearHighlights()
+        this.listeners.abort()
         this.host.dataset.panelOpen = "false"
-        this.host.replaceChildren()
+        this.shadow.replaceChildren()
         Panel.current = null
     }
 }

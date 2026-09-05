@@ -418,6 +418,16 @@ a.list-title:hover {
     padding: var(--space-3);
 }
 
+.advice-note {
+    background: var(--dl-surface-alt);
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md);
+    color: var(--dl-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    padding: var(--space-3) var(--space-4);
+}
+
 .section-stack .field-row {
     margin-left: 0;
 }

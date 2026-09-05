@@ -45,6 +45,7 @@ export function renderInterpreter(ctx: PageContext): HTMLElement {
         ]),
     )
 
+    container.append(pageSection("Advice", [adviceNote()]))
     container.append(pageSection("Providers", [buildProviderList(ctx)]))
     container.append(pageSection("Models", [buildModelList(ctx)]))
 
@@ -66,6 +67,17 @@ export function renderInterpreter(ctx: PageContext): HTMLElement {
         ]),
     )
     return container
+}
+
+function adviceNote(): HTMLElement {
+    return el("div", { className: "advice-note" }, [
+        document.createTextNode(
+            "For the best privacy and speed, run the interpreter on a small local model instead of a cloud API. " +
+                "We recommend serving a compact model such as Liquid AI's LFM2.5 2.6B with LM Studio: start its local server, " +
+                'then add a provider pointing at it ("http://localhost:1234/v1"). ' +
+                "This way the page content you clip never leaves your machine.",
+        ),
+    ])
 }
 
 function buildModelSelect(ctx: PageContext): HTMLElement {

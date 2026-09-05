@@ -80,6 +80,8 @@ export const READER_DEFAULTS = {
     colorLinks: false,
 } as const
 
+export const DEFAULT_INTERPRETER_CONTEXT = "Page content:\n<content>\n{{content}}\n</content>"
+
 export const DEFAULT_SETTINGS: ClipperSettings = {
     version: 1,
     connection: {
@@ -98,7 +100,7 @@ export const DEFAULT_SETTINGS: ClipperSettings = {
         selectedModelId: "",
         providers: [],
         models: [],
-        context: "",
+        context: DEFAULT_INTERPRETER_CONTEXT,
     },
     behavior: {
         saveWithoutOpening: true,
@@ -146,7 +148,7 @@ export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): Cli
                 stored.interpreter?.selectedModelId ?? defaults.interpreter.selectedModelId,
             providers: stored.interpreter?.providers ?? defaults.interpreter.providers,
             models: stored.interpreter?.models ?? defaults.interpreter.models,
-            context: stored.interpreter?.context ?? defaults.interpreter.context,
+            context: pick(stored.interpreter?.context, defaults.interpreter.context),
         },
         behavior: {
             saveWithoutOpening:

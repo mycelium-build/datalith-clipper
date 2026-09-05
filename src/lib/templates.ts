@@ -29,10 +29,11 @@ export const DEFAULT_TEMPLATE: Template = {
         { name: "tags", value: "clips" },
     ],
     content:
-        "{% if image %}![[{{image}}]]{% endif %}\n" +
-        "{{selection}}\n" +
-        "{{highlights}}\n" +
-        "{% if image || selection || highlights %}---{% endif %}\n" +
+        '{"sumarize the page"}\n\n' +
+        "{% if image %}![[{{image}}]]{% endif %}\n\n" +
+        "{{selection}}\n\n" +
+        "{{highlights}}\n\n" +
+        "{% if image || selection || highlights %}---{% endif %}\n\n" +
         "{{content}}",
     context: "",
 }

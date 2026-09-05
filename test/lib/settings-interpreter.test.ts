@@ -8,6 +8,7 @@ describe("interpreter settings", () => {
     it("defaults to disabled with no providers or models", () => {
         expect(DEFAULT_SETTINGS.interpreter).toEqual({
             enabled: false,
+            execOnOpen: false,
             selectedModelId: "",
             providers: [],
             models: [],

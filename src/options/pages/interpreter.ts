@@ -102,10 +102,14 @@ function buildProviderList(ctx: PageContext): HTMLElement {
         listRow([
             dragHandle(),
             el("div", { className: "list-text" }, [
-                el("span", { className: "list-title", text: provider.baseUrl }),
+                el("span", { className: "list-title", text: provider.name || provider.baseUrl }),
                 el("span", {
                     className: "list-subtitle",
-                    text: provider.apiKey ? "API key set" : "No API key",
+                    text: provider.name
+                        ? provider.baseUrl
+                        : provider.apiKey
+                          ? "API key set"
+                          : "No API key",
                 }),
             ]),
             el("span", { className: "list-actions" }, [
@@ -140,26 +144,37 @@ function buildProviderList(ctx: PageContext): HTMLElement {
 function providerDialog(ctx: PageContext, providerId: string | null): void {
     const interpreter = ctx.state.settings.interpreter
     const existing = providerId ? interpreter.providers.find((p) => p.id === providerId) : undefined
-    const baseUrl = textInput(existing?.baseUrl ?? "", "https://api.openai.com/v1")
+    const name = textInput(existing?.name ?? "", "LM Studio")
+    const baseUrl = textInput(existing?.baseUrl ?? "", "http://localhost:1234/v1")
     const apiKey = textInput(existing?.apiKey ?? "", "sk-…")
-    openDialog("Provider", [fieldRow("Base URL", baseUrl), fieldRow("API key", apiKey)], () => {
-        const apply = () => {
-            if (existing) {
-                existing.baseUrl = baseUrl.value.trim()
-                existing.apiKey = apiKey.value.trim()
-            } else {
-                const provider: InterpreterProvider = {
-                    id: uniqueId("provider"),
-                    baseUrl: baseUrl.value.trim(),
-                    apiKey: apiKey.value.trim(),
+    openDialog(
+        "Provider",
+        [
+            fieldRow("Display name", name),
+            fieldRow("Base URL", baseUrl),
+            fieldRow("API key", apiKey),
+        ],
+        () => {
+            const apply = () => {
+                if (existing) {
+                    existing.name = name.value.trim() || existing.name
+                    existing.baseUrl = baseUrl.value.trim()
+                    existing.apiKey = apiKey.value.trim()
+                } else {
+                    const provider: InterpreterProvider = {
+                        id: uniqueId("provider"),
+                        name: name.value.trim(),
+                        baseUrl: baseUrl.value.trim(),
+                        apiKey: apiKey.value.trim(),
+                    }
+                    interpreter.providers.push(provider)
                 }
-                interpreter.providers.push(provider)
+                ctx.save()
+                ctx.rerender()
             }
-            ctx.save()
-            ctx.rerender()
-        }
-        void requestOriginPermission(baseUrl.value).then(apply)
-    })
+            void requestOriginPermission(baseUrl.value).then(apply)
+        },
+    )
 }
 
 async function requestOriginPermission(baseUrl: string): Promise<void> {
@@ -235,7 +250,7 @@ function modelDialog(ctx: PageContext, modelId: string | null): void {
     const providerSelect = selectInput(
         interpreter.providers.map((provider) => ({
             value: provider.id,
-            label: provider.baseUrl,
+            label: provider.name || provider.baseUrl,
         })),
         existing?.providerId ?? interpreter.providers[0]?.id ?? "",
         () => {},

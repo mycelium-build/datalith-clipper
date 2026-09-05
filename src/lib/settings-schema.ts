@@ -6,6 +6,7 @@ export type AppearanceMode = "auto" | "light" | "dark"
 
 export interface InterpreterProvider {
     id: string
+    name: string
     baseUrl: string
     apiKey: string
 }

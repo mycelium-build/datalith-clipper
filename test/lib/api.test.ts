@@ -18,6 +18,12 @@ function fetchMock(response: {
 }
 
 describe("ClipperApi", () => {
+    it("binds the default fetch so receiver-bound calls stay legal in workers", () => {
+        const api = new ClipperApi("http://127.0.0.1:42908", "")
+        const fetchImpl = (api as unknown as { fetchImpl: typeof fetch }).fetchImpl
+        expect(fetchImpl).not.toBe(fetch)
+    })
+
     it("lists vaults", async () => {
         const api = new ClipperApi(
             "http://127.0.0.1:42908",

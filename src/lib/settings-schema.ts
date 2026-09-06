@@ -122,6 +122,44 @@ function pickNumber(value: number | undefined, fallback: number): number {
     return typeof value === "number" && Number.isFinite(value) ? value : fallback
 }
 
+export function splitBaseUrl(baseUrl: string): { url: string; port: string } {
+    try {
+        const parsed = new URL(baseUrl)
+        return { url: `${parsed.protocol}//${parsed.hostname}`, port: parsed.port }
+    } catch {
+        return { url: "", port: "" }
+    }
+}
+
+export function composeBaseUrl(url: string, port: string): string | null {
+    let host = url.trim().replace(/\/+$/, "")
+    if (host === "") return null
+    const trimmedPort = port.trim()
+    const hadPort = /:\d{1,5}$/.test(host)
+    if (trimmedPort !== "") {
+        if (!isValidPort(trimmedPort)) return null
+        host = host.replace(/:\d{1,5}$/, "")
+    } else if (!hadPort) {
+        return null
+    }
+    const withScheme = /^https?:\/\//i.test(host) ? host : `http://${host}`
+    const base = trimmedPort === "" ? withScheme : `${withScheme}:${trimmedPort}`
+    try {
+        return new URL(base).origin
+    } catch {
+        return null
+    }
+}
+
+export const PORT_MIN = 1
+export const PORT_MAX = 65535
+
+export function isValidPort(value: string): boolean {
+    if (!/^\d{1,5}$/.test(value)) return false
+    const port = Number(value)
+    return Number.isInteger(port) && port >= PORT_MIN && port <= PORT_MAX
+}
+
 export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): ClipperSettings {
     const defaults = structuredClone(DEFAULT_SETTINGS)
     if (!stored) return defaults

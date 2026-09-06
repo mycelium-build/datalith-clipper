@@ -56,6 +56,22 @@ export function textInput(
     return input
 }
 
+export function numberInput(
+    value: string,
+    placeholder: string,
+    options: { min?: number; max?: number; step?: number },
+    onChange: (value: string) => void,
+): HTMLInputElement {
+    const attributes: Record<string, string> = { type: "number", placeholder }
+    if (options.min !== undefined) attributes.min = String(options.min)
+    if (options.max !== undefined) attributes.max = String(options.max)
+    if (options.step !== undefined) attributes.step = String(options.step)
+    const input = el("input", { className: "text-input", attributes })
+    input.value = value
+    input.addEventListener("input", () => onChange(input.value))
+    return input
+}
+
 export function textArea(
     value: string,
     placeholder: string,

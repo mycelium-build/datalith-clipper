@@ -2,10 +2,26 @@ import browser from "webextension-polyfill"
 
 import themesIndex from "../../data/themes.json"
 import { el } from "../../lib/dom"
+import {
+    composeBaseUrl,
+    isValidPort,
+    PORT_MAX,
+    PORT_MIN,
+    splitBaseUrl,
+} from "../../lib/settings-schema"
 import type { VaultsResponse } from "../../shared/messages"
+import { requestOriginPermission } from "../permissions"
 import type { PageContext } from "../state"
 import { importSettings } from "../state"
-import { actionButton, fieldRow, pageSection, selectInput, toggleInput } from "../ui"
+import {
+    actionButton,
+    fieldRow,
+    numberInput,
+    pageSection,
+    selectInput,
+    textInput,
+    toggleInput,
+} from "../ui"
 
 const CHANGELOG_URL = "https://github.com/mycelium-build/datalith-clipper/blob/main/CHANGELOG.md"
 
@@ -37,7 +53,11 @@ export function renderGeneral(ctx: PageContext): HTMLElement {
         ]),
     )
 
-    container.append(pageSection("Vaults", [buildVaultSection()]))
+    const vaultSection = buildVaultSection()
+    container.append(
+        pageSection("Connection", [buildConnectionSection(ctx, vaultSection.reload)]),
+        pageSection("Vaults", [vaultSection.root]),
+    )
 
     const themeOptionsFor = (mode: string) =>
         (themesIndex as ThemeIndexEntry[])
@@ -107,14 +127,73 @@ export function renderGeneral(ctx: PageContext): HTMLElement {
     return container
 }
 
-function buildVaultSection(): HTMLElement {
+function buildVaultSection(): { root: HTMLElement; reload: () => void } {
     const select = document.createElement("select")
     select.className = "text-input vault-select"
     select.disabled = true
     select.append(new Option("Loading vaults…", ""))
     const sync = actionButton("Sync", () => void loadVaults(select))
     void loadVaults(select)
-    return el("div", { className: "field-row" }, [select, sync])
+    return {
+        root: el("div", { className: "field-row" }, [select, sync]),
+        reload: () => void loadVaults(select),
+    }
+}
+
+const CONNECTION_DEBOUNCE_MS = 500
+
+function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => void): HTMLElement {
+    const connection = ctx.state.settings.connection
+    const initial = splitBaseUrl(connection.baseUrl)
+
+    let validPort = initial.port
+    let requestedOrigin = initial.url
+    const apply = () => {
+        if (isValidPort(portInput.value)) {
+            validPort = portInput.value
+        } else {
+            portInput.value = validPort
+        }
+        const baseUrl = composeBaseUrl(urlInput.value, portInput.value)
+        if (baseUrl !== null && baseUrl !== connection.baseUrl) connection.baseUrl = baseUrl
+        connection.token = tokenInput.value.trim()
+        void ctx.save()
+        if (baseUrl !== null && baseUrl !== requestedOrigin) {
+            requestedOrigin = baseUrl
+            void requestOriginPermission(baseUrl)
+        }
+        onConnectionChanged()
+    }
+    const scheduleApply = debounce(apply, CONNECTION_DEBOUNCE_MS)
+
+    const urlInput = textInput(initial.url, "http://127.0.0.1", () => scheduleApply())
+    const portInput = numberInput(
+        initial.port,
+        "42908",
+        { min: PORT_MIN, max: PORT_MAX, step: 1 },
+        () => scheduleApply(),
+    )
+    const tokenInput = textInput(connection.token, "Paste the token from Datalith", () =>
+        scheduleApply(),
+    )
+
+    return el("div", {}, [
+        fieldRow("URL", urlInput, "Address of the machine running Datalith."),
+        fieldRow("Port", portInput, "Port the Datalith Local Server listens on."),
+        fieldRow(
+            "Token",
+            tokenInput,
+            "Bearer token from Datalith's Clipper settings. Leave empty if Datalith has no token.",
+        ),
+    ])
+}
+
+function debounce(run: () => void, waitMs: number): () => void {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    return () => {
+        clearTimeout(timer)
+        timer = setTimeout(run, waitMs)
+    }
 }
 
 async function loadVaults(select: HTMLSelectElement): Promise<void> {
@@ -131,11 +210,12 @@ async function loadVaults(select: HTMLSelectElement): Promise<void> {
         select.disabled = true
         return
     }
-    for (const vault of response.vaults) {
+    const options = response.vaults.map((vault) => {
         const option = new Option(vault.name, vault.name)
         option.title = vault.path
-        select.append(option)
-    }
+        return option
+    })
+    select.replaceChildren(...options)
     select.disabled = false
 }
 

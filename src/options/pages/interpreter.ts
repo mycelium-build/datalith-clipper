@@ -1,8 +1,7 @@
-import browser from "webextension-polyfill"
-
 import { el, icon } from "../../lib/dom"
 import type { InterpreterModel, InterpreterProvider } from "../../lib/settings-schema"
 import { dragHandle, makeSortable } from "../dnd"
+import { requestOriginPermission } from "../permissions"
 import { uniqueId, type PageContext } from "../state"
 import {
     actionButton,
@@ -177,14 +176,6 @@ function providerDialog(ctx: PageContext, providerId: string | null): void {
     )
 }
 
-async function requestOriginPermission(baseUrl: string): Promise<void> {
-    try {
-        const origin = `${new URL(baseUrl.trim()).origin}/*`
-        await browser.permissions.request({ origins: [origin] })
-    } catch {
-        // Invalid URL or permission denied
-    }
-}
 function buildModelList(ctx: PageContext): HTMLElement {
     const interpreter = ctx.state.settings.interpreter
     const add = actionButton("Add model", () => modelDialog(ctx, null))

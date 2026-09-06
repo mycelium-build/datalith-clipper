@@ -9,7 +9,7 @@ interface ChatCompletionResponse {
 export async function completePrompt(
     config: InterpreterConfig,
     prompt: string,
-    fetchImpl: typeof fetch = fetch,
+    fetchImpl: typeof fetch = fetch.bind(globalThis),
 ): Promise<InterpreterResponse> {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",

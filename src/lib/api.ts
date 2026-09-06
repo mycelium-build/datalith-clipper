@@ -20,7 +20,7 @@ export class ClipperApi {
     private token: string
     private fetchImpl: typeof fetch
 
-    constructor(baseUrl: string, token: string, fetchImpl: typeof fetch = fetch) {
+    constructor(baseUrl: string, token: string, fetchImpl: typeof fetch = fetch.bind(globalThis)) {
         this.baseUrl = baseUrl.replace(/\/+$/, "")
         this.token = token
         this.fetchImpl = fetchImpl

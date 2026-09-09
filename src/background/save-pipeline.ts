@@ -7,7 +7,7 @@ export const SAVE_RETRY_LIMIT = 20
 export interface SavePipelineDeps {
     saveNote: (note: SaveNoteRequest) => Promise<ApiResult<{ path: string }>>
     launch: () => Promise<void>
-    openNote: (path: string) => Promise<void>
+    openNote: (note: SaveNoteRequest, path: string) => Promise<void>
     shouldOpenNote: boolean
     sleep?: (ms: number) => Promise<void>
     retryLimit?: number
@@ -33,7 +33,7 @@ export async function saveWithRetry(
     for (let attempt = 0; attempt <= limit; attempt++) {
         const result = await deps.saveNote(note)
         if (result.ok) {
-            if (deps.shouldOpenNote) await deps.openNote(result.data.path)
+            if (deps.shouldOpenNote) await deps.openNote(note, result.data.path)
             return { ok: true, path: result.data.path }
         }
         lastError = result.error

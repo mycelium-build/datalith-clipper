@@ -35,9 +35,9 @@ async function handleSaveClip(note: SaveNoteRequest): Promise<SaveResponse> {
         launch: async () => {
             await browser.tabs.create({ url: "datalith://launch", active: false })
         },
-        openNote: async (path) => {
+        openNote: async (savedNote, path) => {
             await browser.tabs.create({
-                url: `datalith://open?path=${encodeURIComponent(path)}`,
+                url: `datalith://open?vault=${encodeURIComponent(savedNote.vault)}&path=${encodeURIComponent(path)}`,
                 active: true,
             })
         },

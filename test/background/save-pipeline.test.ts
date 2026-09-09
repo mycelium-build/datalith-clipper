@@ -105,7 +105,7 @@ describe("saveWithRetry", () => {
         }))
         const d = deps(saveNote, { shouldOpenNote: true })
         await saveWithRetry(NOTE, d)
-        expect(d.openNote).toHaveBeenCalledWith("Clips/Hello.md")
+        expect(d.openNote).toHaveBeenCalledWith(NOTE, "Clips/Hello.md")
     })
 
     it("does not open the note when saveWithoutOpening is on", async () => {

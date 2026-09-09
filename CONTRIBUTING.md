@@ -59,24 +59,31 @@ npm run licenses:check
 
     ```bash
     git clone https://github.com/mycelium-build/datalith-clipper.git
-    cd datalith
+    cd datalith-clipper
     ```
 
-2. Build the project:
+2. Install dependencies and build:
 
     ```bash
     npm ci
-    npm run build
+    npm run sync-assets
+    npm run build        # bundles to dist/chrome and dist/firefox
     ```
 
-3. Run the project:
+3. Load the unpacked extension:
+
+    - **Chrome**: `chrome://extensions` → Developer mode → Load unpacked → `dist/chrome`
+    - **Firefox**: `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → pick any file in `dist/firefox`
+
+4. Rebuild on change while developing:
+
     ```bash
-    npm run dev
+    npm run watch
     ```
 
 ### Development Workflow
 
-1. Make changes to the source code in the `src/` and `scripts/` directories.
+1. Make changes to the source code in the `src/` directory.
 
 2. Run tests:
 
@@ -85,6 +92,7 @@ npm run licenses:check
     ```
 
 3. Check for lint issues:
+
     ```bash
     npm run lint
     ```

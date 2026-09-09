@@ -34,7 +34,7 @@ describe("ClipperApi", () => {
         expect(result.ok && result.data).toEqual([{ name: "Notes", path: "/vaults/Notes" }])
     })
 
-    it("sends the client header and bearer token", async () => {
+    it("hits the versioned vaults path and sends the bearer token", async () => {
         const fetchImpl = fetchMock({ body: [] })
         const api = new ClipperApi("http://127.0.0.1:42908/", "secret", fetchImpl)
         await api.vaults()
@@ -42,9 +42,8 @@ describe("ClipperApi", () => {
             string,
             RequestInit,
         ]
-        expect(url).toBe("http://127.0.0.1:42908/vaults")
+        expect(url).toBe("http://127.0.0.1:42908/api/vaults")
         const headers = init.headers as Record<string, string>
-        expect(headers["X-Datalith-Client"]).toBe("clipper")
         expect(headers.Authorization).toBe("Bearer secret")
     })
 

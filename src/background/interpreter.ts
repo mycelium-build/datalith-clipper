@@ -13,7 +13,6 @@ export async function completePrompt(
 ): Promise<InterpreterResponse> {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
-        "X-Datalith-Client": "clipper",
     }
     if (config.apiKey !== "") {
         headers.Authorization = `Bearer ${config.apiKey}`

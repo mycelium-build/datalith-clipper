@@ -31,17 +31,16 @@ export class ClipperApi {
     }
 
     async vaults(): Promise<ApiResult<Vault[]>> {
-        return this.request<Vault[]>("GET", "/vaults")
+        return this.request<Vault[]>("GET", "/api/vaults")
     }
 
     async saveNote(note: SaveNoteRequest): Promise<ApiResult<{ path: string }>> {
-        return this.request("POST", "/notes", note)
+        return this.request("POST", "/api/notes", note)
     }
 
     private async request<T>(method: string, path: string, body?: unknown): Promise<ApiResult<T>> {
         const headers: Record<string, string> = {
             "Content-Type": "application/json",
-            "X-Datalith-Client": "clipper",
         }
         if (this.token !== "") {
             headers.Authorization = `Bearer ${this.token}`

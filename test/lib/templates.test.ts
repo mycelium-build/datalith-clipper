@@ -54,7 +54,7 @@ describe("DEFAULT_TEMPLATE", () => {
             interpreter: async (prompt) => `<${prompt}>`,
         })
         expect(rendered).toBe(
-            "<short sumary of the page, like 3 sentences, just output the summary>\n\n" +
+            "<short summary of the page, like 3 sentences, just output the summary>\n\n" +
                 "![[https://cdn.example.com/cover.jpg]]\n\n" +
                 "picked\n\n\n\n---\n\nBody text",
         )
@@ -65,7 +65,7 @@ describe("DEFAULT_TEMPLATE", () => {
             variables: { ...CONTEXT, image: "", selection: "", highlights: [] },
         })
         expect(rendered).toBe(
-            "short sumary of the page, like 3 sentences, just output the summary\n\n\n\n\n\n\n\n\n\nBody text",
+            "short summary of the page, like 3 sentences, just output the summary\n\n\n\n\n\n\n\n\n\nBody text",
         )
     })
 

@@ -124,48 +124,52 @@ describe("completePrompt", () => {
 })
 
 describe("createCompleter", () => {
-    it("caches identical prompts per instance", async () => {
-        const send = vi.fn(
-            async (config: InterpreterConfig, prompt: string): Promise<InterpreterResponse> => ({
-                ok: true,
-                content: prompt.toUpperCase(),
-            }),
+    const CONTEXT = async () => "ctx"
+
+    function sendMock(
+        response: InterpreterResponse | ((context: string, prompt: string) => InterpreterResponse),
+    ) {
+        return vi.fn(async (context: string, prompt: string): Promise<InterpreterResponse> =>
+            typeof response === "function" ? response(context, prompt) : response,
         )
-        const complete = createCompleter(CONFIG, send)
+    }
+
+    it("caches identical prompts per instance", async () => {
+        const send = sendMock((_, prompt) => ({ ok: true, content: prompt.toUpperCase() }))
+        const complete = createCompleter(CONTEXT, send)
         expect(await complete("same")).toBe("SAME")
         expect(await complete("same")).toBe("SAME")
         expect(await complete("other")).toBe("OTHER")
         expect(send).toHaveBeenCalledTimes(2)
     })
 
+    it("sends only the context and the prompt — never provider config", async () => {
+        const send = sendMock({ ok: true, content: "Hi" })
+        const complete = createCompleter(CONTEXT, send)
+        await complete("prompt")
+        expect(send).toHaveBeenCalledWith("ctx", "prompt")
+        expect(send.mock.calls[0]).toHaveLength(2)
+    })
+
     it("falls back to the prompt on failure", async () => {
-        const send = vi.fn(async (): Promise<InterpreterResponse> => ({
-            ok: false,
-            error: "boom",
-        }))
-        const complete = createCompleter(CONFIG, send)
+        const send = sendMock({ ok: false, error: "boom" })
+        const complete = createCompleter(CONTEXT, send)
         expect(await complete("prompt")).toBe("prompt")
     })
 
     it("resolves the system context per call", async () => {
-        const send = vi.fn(async (config: InterpreterConfig): Promise<InterpreterResponse> => ({
-            ok: true,
-            content: config.context,
-        }))
+        const send = sendMock((context) => ({ ok: true, content: context }))
         let pageContent = "first"
-        const complete = createCompleter(CONFIG, send, async () => `Page: ${pageContent}`)
+        const complete = createCompleter(async () => `Page: ${pageContent}`, send)
         expect(await complete("p")).toBe("Page: first")
         pageContent = "second"
         expect(await complete("p")).toBe("Page: second")
     })
 
     it("caches per resolved context", async () => {
-        const send = vi.fn(async (config: InterpreterConfig): Promise<InterpreterResponse> => ({
-            ok: true,
-            content: config.context,
-        }))
+        const send = sendMock((context) => ({ ok: true, content: context }))
         let pageContent = "a"
-        const complete = createCompleter(CONFIG, send, async () => `Page: ${pageContent}`)
+        const complete = createCompleter(async () => `Page: ${pageContent}`, send)
         expect(await complete("p")).toBe("Page: a")
         expect(await complete("p")).toBe("Page: a")
         expect(send).toHaveBeenCalledTimes(1)
@@ -174,14 +178,12 @@ describe("createCompleter", () => {
         expect(send).toHaveBeenCalledTimes(2)
     })
 
-    it("falls back to the raw context when resolution fails", async () => {
-        const send = vi.fn(async (config: InterpreterConfig): Promise<InterpreterResponse> => ({
-            ok: true,
-            content: config.context,
-        }))
-        const complete = createCompleter(CONFIG, send, async () => {
+    it("sends an empty context when resolution fails", async () => {
+        const send = sendMock({ ok: true, content: "Hi" })
+        const complete = createCompleter(async () => {
             throw new Error("nope")
-        })
-        expect(await complete("p")).toBe("Be brief")
+        }, send)
+        expect(await complete("p")).toBe("Hi")
+        expect(send).toHaveBeenCalledWith("", "p")
     })
 })

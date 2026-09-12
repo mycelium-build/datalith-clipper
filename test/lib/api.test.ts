@@ -84,6 +84,23 @@ describe("ClipperApi", () => {
         })
     })
 
+    it("reports non-JSON success bodies as malformed, not unreachable", async () => {
+        const api = new ClipperApi(
+            "http://127.0.0.1:42908",
+            "",
+            (async () =>
+                new Response("<html>gateway splash</html>", {
+                    status: 200,
+                })) as unknown as typeof fetch,
+        )
+        const result = await api.ping()
+        expect(result).toEqual({
+            ok: false,
+            error: "Malformed response from Datalith",
+            kind: "http",
+        })
+    })
+
     it("posts notes with name, folder, properties and content", async () => {
         const fetchImpl = fetchMock({ body: { path: "Clips/Hello.md" } })
         const api = new ClipperApi("http://127.0.0.1:42908", "", fetchImpl)

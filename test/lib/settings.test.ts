@@ -31,6 +31,65 @@ describe("mergeDefaults", () => {
         expect(merged.appearance.light).toBe("datalith-light")
         expect(merged.appearance.dark).toBe("matrix")
     })
+
+    it("drops interpreter entries without usable ids", () => {
+        const stored = {
+            interpreter: {
+                enabled: true,
+                execOnOpen: false,
+                selectedModelId: "",
+                providers: [
+                    { id: "p1", name: "Good", baseUrl: "http://x", apiKey: "k" },
+                    { id: "", name: "No id", baseUrl: "http://y", apiKey: "" },
+                    { nope: true },
+                    "garbage",
+                ],
+                models: [
+                    { id: "m1", name: "Good", modelId: "gpt", providerId: "p1" },
+                    { id: "m2", name: "No provider", modelId: "gpt", providerId: "" },
+                    { id: "m3", name: "Unknown provider", modelId: "gpt", providerId: "missing" },
+                    42,
+                ],
+                context: "",
+            },
+        } as unknown as Parameters<typeof mergeDefaults>[0]
+        const merged = mergeDefaults(stored)
+        expect(merged.interpreter.providers).toEqual([
+            { id: "p1", name: "Good", baseUrl: "http://x", apiKey: "k" },
+        ])
+        expect(merged.interpreter.models).toEqual([
+            { id: "m1", name: "Good", modelId: "gpt", providerId: "p1" },
+        ])
+    })
+
+    it("rebuilds templates with per-field fallbacks", () => {
+        const stored = {
+            templates: [
+                {
+                    id: "t1",
+                    name: "Kept",
+                    properties: [{ name: "title", value: "{{title}}" }, "junk", null],
+                    content: "custom",
+                },
+                { id: "" },
+                7,
+            ],
+        } as unknown as Parameters<typeof mergeDefaults>[0]
+        const merged = mergeDefaults(stored)
+        expect(merged.templates).toEqual([
+            {
+                id: "t1",
+                name: "Kept",
+                trigger: "",
+                noteName: "{{title}}",
+                noteFolder: "Clips",
+                vault: "Last used",
+                properties: [{ name: "title", value: "{{title}}" }],
+                content: "custom",
+                context: "",
+            },
+        ])
+    })
 })
 
 describe("splitBaseUrl", () => {
@@ -70,20 +129,30 @@ describe("composeBaseUrl", () => {
         expect(composeBaseUrl("http://127.0.0.1:1234/", "")).toBe("http://127.0.0.1:1234")
     })
 
+    it("falls back to the scheme default port when no port is given", () => {
+        expect(composeBaseUrl("http://127.0.0.1", "")).toBe("http://127.0.0.1")
+        expect(composeBaseUrl("https://datalith.example.com", "")).toBe(
+            "https://datalith.example.com",
+        )
+        expect(composeBaseUrl("datalith.example.com", "")).toBe("http://datalith.example.com")
+    })
+
     it("normalizes trailing slashes and casing", () => {
         expect(composeBaseUrl("HTTP://LocalHost/", "42908")).toBe("http://localhost:42908")
     })
 
-    it("rejects empty urls, missing ports, and out of range ports", () => {
+    it("rejects empty urls and out of range ports", () => {
         expect(composeBaseUrl("", "42908")).toBeNull()
-        expect(composeBaseUrl("http://127.0.0.1", "")).toBeNull()
         expect(composeBaseUrl("http://127.0.0.1", "0")).toBeNull()
         expect(composeBaseUrl("http://127.0.0.1", "65536")).toBeNull()
+        expect(composeBaseUrl("http://127.0.0.1", "abc")).toBeNull()
     })
 
-    it("round trips through splitBaseUrl", () => {
-        const split = splitBaseUrl("http://127.0.0.1:42908")
-        expect(composeBaseUrl(split.url, split.port)).toBe("http://127.0.0.1:42908")
+    it("round trips through splitBaseUrl with and without ports", () => {
+        for (const baseUrl of ["http://127.0.0.1:42908", "https://datalith.example.com"]) {
+            const split = splitBaseUrl(baseUrl)
+            expect(composeBaseUrl(split.url, split.port)).toBe(baseUrl)
+        }
     })
 })
 

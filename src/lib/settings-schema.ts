@@ -1,4 +1,4 @@
-import type { Template } from "./templates"
+import { LAST_USED_VAULT, type Template } from "./templates"
 
 export const DEFAULT_BASE_URL = "http://127.0.0.1:42908"
 
@@ -122,6 +122,90 @@ function pickNumber(value: number | undefined, fallback: number): number {
     return typeof value === "number" && Number.isFinite(value) ? value : fallback
 }
 
+function pickString(value: unknown, fallback: string): string {
+    return typeof value === "string" ? value : fallback
+}
+
+function hasId(value: unknown): value is { id: string } {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        typeof (value as { id?: unknown }).id === "string" &&
+        (value as { id: string }).id !== ""
+    )
+}
+
+function sanitizeProviders(value: unknown): InterpreterProvider[] {
+    if (!Array.isArray(value)) return []
+    const result: InterpreterProvider[] = []
+    for (const provider of value) {
+        if (!hasId(provider)) continue
+        const candidate = provider as Record<string, unknown>
+        result.push({
+            id: provider.id,
+            name: pickString(candidate.name, ""),
+            baseUrl: pickString(candidate.baseUrl, ""),
+            apiKey: pickString(candidate.apiKey, ""),
+        })
+    }
+    return result
+}
+
+function sanitizeModels(value: unknown, providerIds: ReadonlySet<string>): InterpreterModel[] {
+    if (!Array.isArray(value)) return []
+    const result: InterpreterModel[] = []
+    for (const model of value) {
+        if (!hasId(model)) continue
+        const candidate = model as Record<string, unknown>
+        const providerId = candidate.providerId
+        if (typeof providerId !== "string" || providerId === "") continue
+        // A model pointing at a provider that is missing or was dropped is unusable.
+        if (!providerIds.has(providerId)) continue
+        result.push({
+            id: model.id,
+            name: pickString(candidate.name, ""),
+            modelId: pickString(candidate.modelId, ""),
+            providerId,
+        })
+    }
+    return result
+}
+
+function sanitizeTemplateProperties(value: unknown): Template["properties"] {
+    if (!Array.isArray(value)) return []
+    const result: Template["properties"] = []
+    for (const property of value) {
+        if (typeof property !== "object" || property === null) continue
+        const candidate = property as Record<string, unknown>
+        result.push({
+            name: pickString(candidate.name, ""),
+            value: pickString(candidate.value, ""),
+        })
+    }
+    return result
+}
+
+function sanitizeTemplates(value: unknown): Template[] {
+    if (!Array.isArray(value)) return []
+    const result: Template[] = []
+    for (const template of value) {
+        if (!hasId(template)) continue
+        const candidate = template as Record<string, unknown>
+        result.push({
+            id: template.id,
+            name: pickString(candidate.name, ""),
+            trigger: pickString(candidate.trigger, ""),
+            noteName: pickString(candidate.noteName, "{{title}}"),
+            noteFolder: pickString(candidate.noteFolder, "Clips"),
+            vault: pickString(candidate.vault, LAST_USED_VAULT),
+            properties: sanitizeTemplateProperties(candidate.properties),
+            content: pickString(candidate.content, "{{content}}"),
+            context: pickString(candidate.context, ""),
+        })
+    }
+    return result
+}
+
 export function splitBaseUrl(baseUrl: string): { url: string; port: string } {
     try {
         const parsed = new URL(baseUrl)
@@ -135,17 +219,20 @@ export function composeBaseUrl(url: string, port: string): string | null {
     let host = url.trim().replace(/\/+$/, "")
     if (host === "") return null
     const trimmedPort = port.trim()
-    const hadPort = /:\d{1,5}$/.test(host)
     if (trimmedPort !== "") {
         if (!isValidPort(trimmedPort)) return null
         host = host.replace(/:\d{1,5}$/, "")
-    } else if (!hadPort) {
-        return null
     }
     const withScheme = /^https?:\/\//i.test(host) ? host : `http://${host}`
-    const base = trimmedPort === "" ? withScheme : `${withScheme}:${trimmedPort}`
+    return normalizeOrigin(withScheme, trimmedPort)
+}
+
+function normalizeOrigin(host: string, port: string): string | null {
+    const base = port === "" ? host : `${host}:${port}`
     try {
-        return new URL(base).origin
+        const parsed = new URL(base)
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null
+        return parsed.origin
     } catch {
         return null
     }
@@ -163,6 +250,7 @@ export function isValidPort(value: string): boolean {
 export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): ClipperSettings {
     const defaults = structuredClone(DEFAULT_SETTINGS)
     if (!stored) return defaults
+    const interpreterProviders = sanitizeProviders(stored.interpreter?.providers)
     return {
         version: 1,
         connection: {
@@ -185,8 +273,11 @@ export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): Cli
             execOnOpen: stored.interpreter?.execOnOpen ?? defaults.interpreter.execOnOpen,
             selectedModelId:
                 stored.interpreter?.selectedModelId ?? defaults.interpreter.selectedModelId,
-            providers: stored.interpreter?.providers ?? defaults.interpreter.providers,
-            models: stored.interpreter?.models ?? defaults.interpreter.models,
+            providers: interpreterProviders,
+            models: sanitizeModels(
+                stored.interpreter?.models,
+                new Set(interpreterProviders.map((provider) => provider.id)),
+            ),
             context: pick(stored.interpreter?.context, defaults.interpreter.context),
         },
         behavior: {
@@ -198,7 +289,7 @@ export function mergeDefaults(stored: Partial<ClipperSettings> | undefined): Cli
             folder: pick(stored.lastUsed?.folder, defaults.lastUsed.folder),
             templateId: pick(stored.lastUsed?.templateId, defaults.lastUsed.templateId),
         },
-        templates: Array.isArray(stored.templates) ? stored.templates : defaults.templates,
+        templates: sanitizeTemplates(stored.templates),
     }
 }
 

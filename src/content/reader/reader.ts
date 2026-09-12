@@ -65,6 +65,10 @@ class Reader {
         const context = captureContext(document, url)
         const html = marked.parse(context.content, { async: false })
         const host = ensureHost()
+        if (Reader.current) {
+            host.dataset.readerOpen = "true"
+            return
+        }
         host.dataset.readerOpen = "true"
         Reader.current = new Reader(host, settings, context.title, html)
     }
@@ -92,5 +96,7 @@ function ensureHost(): HTMLElement {
 }
 
 export function toggleReader(): void {
-    Reader.toggle()
+    Reader.toggle().catch(() => {
+        // Reader failures are non-fatal
+    })
 }

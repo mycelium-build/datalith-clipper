@@ -7,14 +7,6 @@ let onHighlight: ((text: string) => void) | null = null
 const highlights: string[] = []
 const marks: HTMLElement[] = []
 
-export function isHighlighterActive(): boolean {
-    return active
-}
-
-export function getHighlights(): string[] {
-    return [...highlights]
-}
-
 export function toggleHighlighter(callback?: (text: string) => void): boolean {
     if (active) {
         stop()

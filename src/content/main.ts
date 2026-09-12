@@ -18,7 +18,9 @@ document.addEventListener("selectionchange", () => {
 browser.runtime.onMessage.addListener((message: unknown) => {
     if (!isCommandMessage(message) || !CONTENT_COMMANDS.has(message.type)) return
     if (message.type === "toggle-panel") {
-        Panel.toggle(lastSelection)
+        Panel.toggle(lastSelection).catch(() => {
+            // Panel errors are surfaced in its status line
+        })
     } else if (message.type === "toggle-reader") {
         toggleReader()
     } else if (message.type === "toggle-highlighter") {

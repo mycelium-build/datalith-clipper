@@ -5,12 +5,11 @@ import browser from "webextension-polyfill"
 import { el, icon } from "../../lib/dom"
 import { captureContext } from "../../lib/extract"
 import { matchAnyGlob } from "../../lib/glob"
-import { createCompleter, resolveInterpreterConfig } from "../../lib/interpreter"
 import { renderWikilinkEmbeds } from "../../lib/markdown"
 import { loadSettings, saveSettings } from "../../lib/settings"
 import type { ClipperSettings } from "../../lib/settings-schema"
 import { resolveTheme } from "../../lib/settings-schema"
-import { renderTemplate, type RenderOptions } from "../../lib/template"
+import { renderTemplate } from "../../lib/template"
 import {
     DEFAULT_TEMPLATE,
     LAST_USED_VAULT,
@@ -21,6 +20,7 @@ import type { SaveResponse, VaultsResponse } from "../../shared/messages"
 import type { ClipContext } from "../../shared/variables"
 import { clearHighlights, toggleHighlighter } from "../highlighter"
 import { toggleReader } from "../reader/reader"
+import { ClipRenderer } from "./clip-renderer"
 
 import panelCss from "../../styles/panel.css"
 import themesCss from "../../styles/themes.css"
@@ -60,6 +60,10 @@ function contextEntries(context: ClipContext): Array<[string, string]> {
     ]
 }
 
+function errorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error)
+}
+
 function pickTemplate(templates: Template[], url: string, lastTemplateId: string): Template {
     const triggered = templates.find((template) => matchAnyGlob(url, template.trigger))
     if (triggered) return triggered
@@ -73,10 +77,10 @@ export class Panel {
     private root: HTMLDivElement
     private state: DraftState | null = null
     private settings: ClipperSettings | null = null
+    private renderer: ClipRenderer | null = null
     private minimized = false
     private propertiesCollapsed = false
     private templates: Template[] = []
-    private renderOptions: RenderOptions | null = null
     private contentDirty = false
     private listeners = new AbortController()
 
@@ -98,12 +102,18 @@ export class Panel {
         }
         host.dataset.panelOpen = "true"
         const settings = await loadSettings()
+        // prevent closing the panel when there is a second toggle
+        if (host.dataset.panelOpen !== "true" || Panel.current) return
         const theme = resolveTheme(settings)
         host.dataset.datalithTheme = theme.id
         const panel = new Panel(host)
         Panel.current = panel
-        await panel.load(selection, settings)
-        if (options.enableHighlighter) panel.toggleHighlighter()
+        try {
+            await panel.load(selection, settings)
+        } catch (error) {
+            panel.setStatus(`Could not capture this page — ${errorMessage(error)}`, "error")
+        }
+        if (options.enableHighlighter && Panel.current === panel) panel.toggleHighlighter()
     }
 
     static current: Panel | null = null
@@ -115,27 +125,35 @@ export class Panel {
         const context = captureContext(document, url, { selection, highlights: [] })
         this.templates = resolveTemplates(settings.templates)
         const template = pickTemplate(this.templates, url, settings.lastUsed.templateId)
-        const variables: Record<string, unknown> = { ...context }
-        const renderOptions: RenderOptions = { variables }
-        this.renderOptions = renderOptions
-        this.applyInterpreter(renderOptions, template)
-        const draft = this.draftOptions()
-        if (!draft) return
+        const renderer = new ClipRenderer(settings, { ...context })
+        this.renderer = renderer
+        const interpreterWarning = renderer.useTemplate(template)
+        if (interpreterWarning) this.setStatus(interpreterWarning, "muted")
+        const draft = renderer.draft(settings.interpreter.execOnOpen)
         const state: DraftState = {
             template,
             context,
-            title: await renderTemplate(template.noteName, draft),
-            folder: await renderTemplate(template.noteFolder, draft),
-            content: await renderTemplate(template.content, draft),
+            title: "",
+            folder: "",
             properties: [],
+            content: "",
             vault: "",
         }
-        state.properties = await Promise.all(
-            template.properties.map(async (property) => ({
-                name: property.name,
-                value: await renderTemplate(property.value, draft),
-            })),
-        )
+        try {
+            state.title = await renderTemplate(template.noteName, draft)
+            state.folder = await renderTemplate(template.noteFolder, draft)
+            state.content = await renderTemplate(template.content, draft)
+            state.properties = await Promise.all(
+                template.properties.map(async (property) => ({
+                    name: property.name,
+                    value: await renderTemplate(property.value, draft),
+                })),
+            )
+        } catch (error) {
+            this.root.classList.remove("is-loading")
+            this.setStatus(`Template error — ${errorMessage(error)}`, "error")
+            return
+        }
         state.vault = template.vault === LAST_USED_VAULT ? settings.lastUsed.vault : template.vault
         this.state = state
         this.populate()
@@ -143,66 +161,37 @@ export class Panel {
         this.refreshVaults(settings)
     }
 
-    private applyInterpreter(options: RenderOptions, template: Template): void {
-        const settings = this.settings
-        if (!settings) return
-        const interpreterConfig = resolveInterpreterConfig(settings, template.context)
-        if (settings.interpreter.enabled && !interpreterConfig) {
-            this.setStatus(
-                "Interpreter is enabled but no model is configured, prompts render as plain text",
-                "muted",
-            )
-        }
-        options.interpreter = interpreterConfig
-            ? createCompleter(interpreterConfig, undefined, async () =>
-                  renderTemplate(interpreterConfig.context, { variables: options.variables }),
-              )
-            : undefined
-    }
-
-    /** Draft renders keep `{{highlights}}` (and `{"prompt"}` unless exec-on-open). */
-    private draftOptions(): RenderOptions | null {
-        const options = this.renderOptions
-        if (!options) return null
-        const execOnOpen = this.settings?.interpreter.execOnOpen === true
-        return {
-            variables: options.variables,
-            deferred: ["highlights"],
-            keepPrompts: !execOnOpen,
-            interpreter: execOnOpen ? options.interpreter : undefined,
-        }
-    }
-
-    /** Preview resolves highlights. */
-    private previewOptions(): RenderOptions | null {
-        const options = this.renderOptions
-        if (!options) return null
-        return { variables: options.variables, keepPrompts: true }
-    }
-
-    /** Save resolves everything: deferred variables and prompts. */
-    private saveOptions(): RenderOptions | null {
-        const options = this.renderOptions
-        if (!options) return null
-        return { variables: options.variables, interpreter: options.interpreter }
-    }
-
     private async switchTemplate(template: Template): Promise<void> {
         const state = this.state
-        const options = this.draftOptions()
-        if (!state || !options) return
+        const renderer = this.renderer
+        if (!state || !renderer) return
+        const execOnOpen = this.settings?.interpreter.execOnOpen === true
+        const interpreterWarning = renderer.useTemplate(template)
+        if (interpreterWarning) this.setStatus(interpreterWarning, "muted")
+        const draft = renderer.draft(execOnOpen)
+        let title: string
+        let folder: string
+        let content: string
+        let properties: PropertyRow[]
+        try {
+            title = await renderTemplate(template.noteName, draft)
+            folder = await renderTemplate(template.noteFolder, draft)
+            content = await renderTemplate(template.content, draft)
+            properties = await Promise.all(
+                template.properties.map(async (property) => ({
+                    name: property.name,
+                    value: await renderTemplate(property.value, draft),
+                })),
+            )
+        } catch (error) {
+            this.setStatus(`Template error — ${errorMessage(error)}`, "error")
+            return
+        }
         state.template = template
-        options.variables.highlights = state.context.highlights
-        this.applyInterpreter(this.renderOptions as RenderOptions, template)
-        state.title = await renderTemplate(template.noteName, options)
-        state.folder = await renderTemplate(template.noteFolder, options)
-        state.content = await renderTemplate(template.content, options)
-        state.properties = await Promise.all(
-            template.properties.map(async (property) => ({
-                name: property.name,
-                value: await renderTemplate(property.value, options),
-            })),
-        )
+        state.title = title
+        state.folder = folder
+        state.content = content
+        state.properties = properties
         this.contentDirty = false
         this.populate()
     }
@@ -312,8 +301,8 @@ export class Panel {
         const state = this.state
         if (!state) return
         state.context.highlights.push(text)
-        const options = this.renderOptions
-        if (options) options.variables.highlights = state.context.highlights
+        const renderer = this.renderer
+        if (renderer) renderer.variables.highlights = state.context.highlights
         if (this.contentDirty) {
             // The user owns the content, so quote the highlight at the end.
             const quoted = text.split("\n").join("\n> ")
@@ -631,11 +620,15 @@ export class Panel {
     }
 
     private async renderPreview(): Promise<void> {
-        const options = this.previewOptions()
-        if (!options) return
-        const resolved = await renderTemplate(this.contentInput.value, options)
-        const html = marked.parse(renderWikilinkEmbeds(resolved), { async: false })
-        this.previewPane.innerHTML = DOMPurify.sanitize(html)
+        const renderer = this.renderer
+        if (!renderer) return
+        try {
+            const resolved = await renderTemplate(this.contentInput.value, renderer.preview())
+            const html = marked.parse(renderWikilinkEmbeds(resolved), { async: false })
+            this.previewPane.innerHTML = DOMPurify.sanitize(html)
+        } catch (error) {
+            this.previewPane.textContent = `Template error — ${errorMessage(error)}`
+        }
     }
 
     private toggleVariables(open: boolean): void {
@@ -699,29 +692,42 @@ export class Panel {
 
     private async save(): Promise<void> {
         const state = this.state
-        if (!state) return
+        const renderer = this.renderer
+        if (!state || !renderer) return
         if (state.vault === "") {
             this.setStatus("Select a vault first", "error")
             return
         }
         this.saveButton.disabled = true
         this.setStatus("Saving…")
-        const options = this.saveOptions()
-        if (!options) return
-        const properties = await Promise.all(
-            state.properties
-                .filter((property) => property.name.trim() !== "")
-                .map(async (property) => ({
-                    name: property.name.trim(),
-                    value: await renderTemplate(property.value, options),
-                })),
-        )
-        const note = {
-            vault: state.vault,
-            name: await renderTemplate(state.title, options),
-            folder: await renderTemplate(state.folder, options),
-            properties: Object.fromEntries(properties.map((p) => [p.name, p.value])),
-            content: await renderTemplate(state.content, options),
+        let note: {
+            vault: string
+            name: string
+            folder: string
+            properties: Record<string, string>
+            content: string
+        }
+        try {
+            const options = renderer.save()
+            const properties = await Promise.all(
+                state.properties
+                    .filter((property) => property.name.trim() !== "")
+                    .map(async (property) => ({
+                        name: property.name.trim(),
+                        value: await renderTemplate(property.value, options),
+                    })),
+            )
+            note = {
+                vault: state.vault,
+                name: await renderTemplate(state.title, options),
+                folder: await renderTemplate(state.folder, options),
+                properties: Object.fromEntries(properties.map((p) => [p.name, p.value])),
+                content: await renderTemplate(state.content, options),
+            }
+        } catch (error) {
+            this.saveButton.disabled = false
+            this.setStatus(`Template error — ${errorMessage(error)}`, "error")
+            return
         }
         const response = (await browser.runtime.sendMessage({
             type: "save-clip",

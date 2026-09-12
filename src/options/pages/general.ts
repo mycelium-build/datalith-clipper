@@ -10,9 +10,9 @@ import {
     splitBaseUrl,
 } from "../../lib/settings-schema"
 import type { VaultsResponse } from "../../shared/messages"
-import { requestOriginPermission } from "../permissions"
+import { hasOriginPermission, requestOriginPermission } from "../permissions"
 import type { PageContext } from "../state"
-import { importSettings } from "../state"
+import { exportPayload, importSettings } from "../state"
 import {
     actionButton,
     fieldRow,
@@ -147,7 +147,6 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
     const initial = splitBaseUrl(connection.baseUrl)
 
     let validPort = initial.port
-    let requestedOrigin = initial.url
     const apply = () => {
         if (isValidPort(portInput.value)) {
             validPort = portInput.value
@@ -158,13 +157,29 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
         if (baseUrl !== null && baseUrl !== connection.baseUrl) connection.baseUrl = baseUrl
         connection.token = tokenInput.value.trim()
         void ctx.save()
-        if (baseUrl !== null && baseUrl !== requestedOrigin) {
-            requestedOrigin = baseUrl
-            void requestOriginPermission(baseUrl)
-        }
         onConnectionChanged()
+        void refreshAccess()
     }
     const scheduleApply = debounce(apply, CONNECTION_DEBOUNCE_MS)
+
+    const accessStatus = el("span", { className: "field-description" })
+    const accessButton = actionButton("Grant access", () => {
+        const baseUrl = composeBaseUrl(urlInput.value, portInput.value)
+        if (baseUrl === null) return
+        void requestOriginPermission(baseUrl).then(() => void refreshAccess())
+    })
+    const refreshAccess = () => {
+        const baseUrl = composeBaseUrl(urlInput.value, portInput.value)
+        if (baseUrl === null) {
+            accessStatus.textContent = ""
+            return
+        }
+        void hasOriginPermission(baseUrl).then((granted) => {
+            accessStatus.textContent = granted
+                ? `Access granted for ${baseUrl}`
+                : "Access not granted yet"
+        })
+    }
 
     const urlInput = textInput(initial.url, "http://127.0.0.1", () => scheduleApply())
     const portInput = numberInput(
@@ -176,14 +191,24 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
     const tokenInput = textInput(connection.token, "Paste the token from Datalith", () =>
         scheduleApply(),
     )
+    void refreshAccess()
 
     return el("div", {}, [
         fieldRow("URL", urlInput, "Address of the machine running Datalith."),
-        fieldRow("Port", portInput, "Port the Datalith Local Server listens on."),
+        fieldRow(
+            "Port",
+            portInput,
+            "Port the Datalith Local Server listens on.",
+        ),
         fieldRow(
             "Token",
             tokenInput,
             "Bearer token from Datalith's Clipper settings. Leave empty if Datalith has no token.",
+        ),
+        fieldRow(
+            "Access",
+            el("span", { className: "button-row" }, [accessButton, accessStatus]),
+            "The extension asks for network access per origin so it can reach the Local Server.",
         ),
     ])
 }
@@ -221,7 +246,7 @@ async function loadVaults(select: HTMLSelectElement): Promise<void> {
 
 function buildExportImport(ctx: PageContext): HTMLElement {
     const exportButton = actionButton("Export", () => {
-        const blob = new Blob([JSON.stringify({ settings: ctx.state.settings }, null, 4)], {
+        const blob = new Blob([exportPayload(ctx.state)], {
             type: "application/json",
         })
         const url = URL.createObjectURL(blob)

@@ -45,23 +45,28 @@ export class ClipperApi {
         if (this.token !== "") {
             headers.Authorization = `Bearer ${this.token}`
         }
+        let response: Response
         try {
-            const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+            response = await this.fetchImpl(`${this.baseUrl}${path}`, {
                 method,
                 headers,
                 body: body === undefined ? undefined : JSON.stringify(body),
             })
-            if (!response.ok) {
-                const detail = await response.json().catch(() => null)
-                const message =
-                    detail && typeof detail === "object" && "error" in detail
-                        ? String((detail as { error: unknown }).error)
-                        : `${response.status} ${response.statusText}`
-                return { ok: false, error: message, kind: "http" }
-            }
-            return { ok: true, data: (await response.json()) as T }
         } catch {
             return { ok: false, error: "Datalith is unreachable", kind: "unreachable" }
+        }
+        if (!response.ok) {
+            const detail = await response.json().catch(() => null)
+            const message =
+                detail && typeof detail === "object" && "error" in detail
+                    ? String((detail as { error: unknown }).error)
+                    : `${response.status} ${response.statusText}`
+            return { ok: false, error: message, kind: "http" }
+        }
+        try {
+            return { ok: true, data: (await response.json()) as T }
+        } catch {
+            return { ok: false, error: "Malformed response from Datalith", kind: "http" }
         }
     }
 }

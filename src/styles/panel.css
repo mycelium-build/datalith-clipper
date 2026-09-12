@@ -196,6 +196,10 @@
     display: flex;
     gap: 4px;
 
+    &:focus-within .property-delete {
+        display: inline-flex;
+    }
+
     input {
         background: var(--dl-surface);
         border: 1px solid var(--dl-border);
@@ -206,10 +210,6 @@
 
         &:focus {
             outline: 1px solid var(--dl-accent);
-
-            .property-delete {
-                display: inline-flex;
-            }
         }
     }
 }

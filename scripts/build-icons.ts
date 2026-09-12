@@ -22,10 +22,6 @@ export async function buildIcons(): Promise<number> {
 export const icons: Record<string, string> = {
 ${entries.join("\n")}
 }
-
-export function icon(name: string): string {
-    return icons[name] ?? ""
-}
 `
 
     await mkdir(path.dirname(outputPath), { recursive: true })

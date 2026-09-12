@@ -1,9 +1,26 @@
 import type { InterpreterConfig, InterpreterResponse } from "../lib/interpreter"
+import { resolveInterpreterConfig } from "../lib/interpreter"
 
 const REQUEST_TIMEOUT_MS = 60_000
 
 interface ChatCompletionResponse {
     choices?: Array<{ message?: { content?: unknown } }>
+}
+
+/**
+ * Rebuilds the provider config (including the API key)
+ * from settings so the key never has to travel through content scripts or messages.
+ */
+export async function completeWithSettings(
+    context: string,
+    prompt: string,
+): Promise<InterpreterResponse> {
+    // Dynamic import: keeps webextension-polyfill out of unit-test module graphs.
+    const { loadSettings } = await import("../lib/settings")
+    const settings = await loadSettings()
+    const config = resolveInterpreterConfig(settings, context)
+    if (!config) return { ok: false, error: "Interpreter is not configured" }
+    return completePrompt(config, prompt)
 }
 
 export async function completePrompt(

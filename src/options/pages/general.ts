@@ -195,11 +195,7 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
 
     return el("div", {}, [
         fieldRow("URL", urlInput, "Address of the machine running Datalith."),
-        fieldRow(
-            "Port",
-            portInput,
-            "Port the Datalith Local Server listens on.",
-        ),
+        fieldRow("Port", portInput, "Port the Datalith Local Server listens on."),
         fieldRow(
             "Token",
             tokenInput,

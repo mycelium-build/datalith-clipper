@@ -40,6 +40,10 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 export function icon(name: string, className = "icon"): HTMLSpanElement {
     const span = document.createElement("span")
     span.className = className
-    span.innerHTML = icons[name] ?? ""
+    const source = icons[name]
+    if (source === undefined) {
+        console.warn(`Unknown icon: ${name}`)
+    }
+    span.innerHTML = source ?? ""
     return span
 }

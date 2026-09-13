@@ -203,7 +203,7 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
         ),
         fieldRow(
             "Access",
-            el("span", { className: "button-row" }, [accessButton, accessStatus]),
+            el("div", { className: "access-control" }, [accessButton, accessStatus]),
             "The extension asks for network access per origin so it can reach the Local Server.",
         ),
     ])

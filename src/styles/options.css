@@ -343,6 +343,19 @@ input[type="range"] {
     gap: var(--space-2);
 }
 
+.access-control {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+
+    .field-description {
+        max-width: 18rem;
+        overflow-wrap: anywhere;
+        text-align: right;
+    }
+}
+
 .list-card {
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-md);

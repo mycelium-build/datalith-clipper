@@ -10,7 +10,7 @@ import type { Template } from "../../lib/templates"
 /**
  * Holds the shared variables of a Clip and produces the three render phases:
  *
- * - draft keeps `{{highlights}}` unresolved (and `{"prompt"}` unless exec-on-open)
+ * - draft keeps `{{highlights}}` unresolved (and `{{"prompt"}}` unless exec-on-open)
  *   so the user edits the template, not the resolved text
  * - preview resolves highlights but keeps prompts as text
  * - save resolves everything
@@ -58,6 +58,7 @@ export class ClipRenderer {
     draft(execOnOpen: boolean): RenderOptions {
         return {
             variables: this.variables,
+            resolveSelector: resolveFromPage,
             deferred: ["highlights"],
             keepPrompts: !execOnOpen,
             interpreter: execOnOpen ? this.interpreter : undefined,
@@ -65,10 +66,21 @@ export class ClipRenderer {
     }
 
     preview(): RenderOptions {
-        return { variables: this.variables, keepPrompts: true }
+        return { variables: this.variables, resolveSelector: resolveFromPage, keepPrompts: true }
     }
 
     save(): RenderOptions {
-        return { variables: this.variables, interpreter: this.interpreter }
+        return {
+            variables: this.variables,
+            resolveSelector: resolveFromPage,
+            interpreter: this.interpreter,
+        }
     }
+}
+
+function resolveFromPage(query: string, attr?: string): string[] {
+    const elements = document.querySelectorAll(query)
+    return Array.from(elements, (element) =>
+        attr ? (element.getAttribute(attr) ?? "") : (element.textContent ?? "").trim(),
+    )
 }

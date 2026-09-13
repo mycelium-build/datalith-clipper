@@ -11,7 +11,7 @@ For more info go to [Datalith's website](https://mycelium-build.github.io/datali
 - **Clip any page** into a clean Markdown Note: content extracted and converted, with title, author, description and word count resolved automatically
 - **Panel**, a full-height sidebar to review the Clip before saving: edit the name, properties and content with live Markdown preview, pick vault and folder
 - **Templates**, named recipes that fill the Note for you: variables, CSS-selector extraction, conditionals, loops and pipes. A trigger (URL glob) can auto-select the right Template per site
-- **Interpreter**, optional LLM support that evaluates `{"prompt"}` expressions through your own OpenAI-compatible provider (off by default)
+- **Interpreter**, optional LLM support that evaluates `{{"prompt"}}` expressions through your own OpenAI-compatible provider (off by default)
 - **Highlights**: paint text on the page in highlighter mode and it lands in the saved Note
 - **Reader view**: a distraction-free overlay with configurable font, size, line height and link coloring
 - **Themes**: light, dark or auto, matching Datalith's own themes

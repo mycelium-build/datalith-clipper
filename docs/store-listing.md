@@ -22,7 +22,7 @@ into your Datalith vault.
 
 - One-click clips: the page title, properties and main content are prefilled for you
 - Templates: variables (title, author, selection, highlights, image…), CSS-selector extraction, pipes, conditionals and loops — with per-site triggers that pick the right template automatically
-- Interpreter: optionally run {"prompt"} expressions through your own OpenAI-compatible model provider to summarize or transform pages
+- Interpreter: optionally run {{"prompt"}} expressions through your own OpenAI-compatible model provider to summarize or transform pages
 - Highlighter: paint text on the page to collect quotes into your note
 - Reader view: distraction-free reading with your choice of font, size and line height
 - Themes: every Datalith app theme, light and dark

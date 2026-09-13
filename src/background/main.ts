@@ -3,9 +3,11 @@ import browser from "webextension-polyfill"
 import { ClipperApi, type SaveNoteRequest } from "../lib/api"
 import type { InterpreterResponse } from "../lib/interpreter"
 import { loadSettings } from "../lib/settings"
+import { loadVaultCache, saveVaultCache } from "../lib/vault-cache"
 import { isCommandMessage, type SaveResponse, type VaultsResponse } from "../shared/messages"
 import { completeWithSettings } from "./interpreter"
 import { saveWithRetry } from "./save-pipeline"
+import { resolveVaults } from "./vaults"
 
 async function sendToActiveTab(message: { type: string }): Promise<void> {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true })
@@ -23,8 +25,11 @@ async function api(): Promise<ClipperApi> {
 }
 
 async function handleGetVaults(): Promise<VaultsResponse> {
-    const result = await (await api()).vaults()
-    return result.ok ? { ok: true, vaults: result.data } : { ok: false, error: result.error }
+    return resolveVaults({
+        fetchVaults: async () => (await api()).vaults(),
+        loadCache: loadVaultCache,
+        saveCache: saveVaultCache,
+    })
 }
 
 async function handleSaveClip(note: SaveNoteRequest): Promise<SaveResponse> {

@@ -119,9 +119,9 @@ describe("ClipRenderer", () => {
     it("falls back to the raw context when rendering fails", async () => {
         const send = sendMock()
         const renderer = new ClipRenderer(settingsWithInterpreter(), {}, send)
-        renderer.useTemplate({ ...TEMPLATE, context: 'Page {{ "a\\xb" }}' })
+        renderer.useTemplate({ ...TEMPLATE, context: "Page {{ domain | nope }}" })
         const interpreter = renderer.draft(true).interpreter
         await interpreter!("p")
-        expect(send).toHaveBeenCalledWith('Page {{ "a\\xb" }}', "p")
+        expect(send).toHaveBeenCalledWith("Page {{ domain | nope }}", "p")
     })
 })

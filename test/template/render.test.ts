@@ -1,10 +1,29 @@
 import { describe, expect, it } from "vitest"
 
-import { renderTemplate } from "../../src/lib/template"
+import {
+    renderTemplate,
+    templateErrorMessage,
+    validateTemplate,
+    type RenderOptions,
+} from "../../src/lib/template"
+import { DEFAULT_TEMPLATE } from "../../src/lib/templates"
 
 const SELECTOR_MAP: Record<string, string[]> = {
     h1: ["First Heading", "Second Heading"],
     "img.hero?src": ["/hero-a.png", "/hero-b.png"],
+    p: ["Only paragraph"],
+    empty: [],
+}
+
+async function render(template: string, options: Partial<RenderOptions> = {}): Promise<string> {
+    return renderTemplate(template, {
+        variables: {},
+        resolveSelector: (query, attr) => {
+            const key = `${query}${attr ? `?${attr}` : ""}`
+            return SELECTOR_MAP[key] ?? []
+        },
+        ...options,
+    })
 }
 
 describe("renderTemplate", () => {
@@ -50,24 +69,34 @@ describe("renderTemplate", () => {
             expected: "x",
         },
         {
-            name: "bare list joins with blank lines",
+            name: "bare list renders as JSON",
             template: "{{items}}",
             variables: { items: ["one", "two"] },
-            expected: "one\n\ntwo",
+            expected: '["one","two"]',
         },
         {
-            name: "selector with resolver",
-            template: "{{selector:h1}}",
-            expected: "First Heading\n\nSecond Heading",
+            name: "selector with resolver renders the collection",
+            template: "{{selector:h1 | join:', '}}",
+            expected: "First Heading, Second Heading",
         },
         {
             name: "selector attribute query",
-            template: "{{selector:img.hero?src}}",
-            expected: "/hero-a.png\n\n/hero-b.png",
+            template: "{{selector:img.hero?src | join:', '}}",
+            expected: "/hero-a.png, /hero-b.png",
         },
         {
-            name: "prompt renders unchanged without interpreter",
-            template: 'Before {"Summarize this page"} after',
+            name: "single selector match renders as a plain string",
+            template: "[{{selector:p}}]",
+            expected: "[Only paragraph]",
+        },
+        {
+            name: "empty selector renders empty",
+            template: "[{{selector:empty}}]",
+            expected: "[]",
+        },
+        {
+            name: "prompt renders as plain text without interpreter",
+            template: 'Before {{"Summarize this page"}} after',
             expected: "Before Summarize this page after",
         },
         {
@@ -143,28 +172,34 @@ describe("renderTemplate", () => {
             expected: "empty",
         },
         {
-            name: "fallback with ??",
-            template: "{{ author ?? 'Unknown' }}",
+            name: "nullish ?? falls back on empty string",
+            template: '{{ author ?? "Unknown" }}',
             variables: { author: "" },
             expected: "Unknown",
         },
         {
-            name: "fallback keeps existing value",
-            template: "{{ author ?? 'Unknown' }}",
+            name: "nullish ?? keeps an existing value",
+            template: '{{ author ?? "Unknown" }}',
             variables: { author: "Ada" },
             expected: "Ada",
         },
         {
-            name: "or keeps first truthy value",
+            name: "nullish ?? falls back on zero",
+            template: '{{ n ?? "Unknown" }}',
+            variables: { n: 0 },
+            expected: "Unknown",
+        },
+        {
+            name: "or renders a boolean, not the operand",
             template: "{{ a || b }}",
             variables: { a: "", b: "b" },
-            expected: "b",
+            expected: "true",
         },
         {
             name: "for loop with loop.index",
             template: "{% for item in items %}{{loop.index}}:{{item}};{% endfor %}",
             variables: { items: ["a", "b"] },
-            expected: "1:a;2:b;",
+            expected: "1:a;\n2:b;",
         },
         {
             name: "for over missing renders nothing",
@@ -203,16 +238,22 @@ describe("renderTemplate", () => {
             expected: "a, b",
         },
         {
-            name: "merge pipe on string and list",
-            template: "{{ title|merge:'!' }} {{ tags|merge:'c'|join:'-' }}",
-            variables: { title: "Hi", tags: ["a", "b"] },
-            expected: "Hi! a-b-c",
+            name: "merge appends to a list",
+            template: "{{ tags|merge:'c'|join:'-' }}",
+            variables: { tags: ["a", "b"] },
+            expected: "a-b-c",
         },
         {
-            name: "nth pipe keeps first n elements",
-            template: "{{ tags|nth:2|join:',' }} {{ title|nth:3 }}",
-            variables: { tags: ["a", "b", "c"], title: "Rust" },
-            expected: "a,b Rus",
+            name: "merge on a string produces a list",
+            template: "{{ title|merge:'!' }}",
+            variables: { title: "Hi" },
+            expected: '["Hi","!"]',
+        },
+        {
+            name: "nth pipe selects every nth element",
+            template: "{{ tags|nth:2|join:',' }} {{ tags|slice:0,2|join:',' }}",
+            variables: { tags: ["a", "b", "c"] },
+            expected: "b a,b",
         },
         {
             name: "reverse pipe",
@@ -239,22 +280,16 @@ describe("renderTemplate", () => {
             expected: "2026-01-02 2025-12-18",
         },
         {
-            name: "date_modify on datetime values",
+            name: "date_modify on a full ISO datetime drops the time part",
             template: "{{ date|date_modify:'+3 hours' }}",
             variables: { date: "2026-01-01T10:00:00.000Z" },
-            expected: "2026-01-01T13:00:00.000Z",
+            expected: "2026-01-01",
         },
         {
             name: "pipes chain left to right",
             template: "{{ title|length|calc:'-2' }}",
             variables: { title: "Hello" },
             expected: "3",
-        },
-        {
-            name: "unknown pipe leaves value unchanged",
-            template: "{{ title|nope }}",
-            variables: { title: "Hi" },
-            expected: "Hi",
         },
         {
             name: "plain braces stay literal",
@@ -264,35 +299,75 @@ describe("renderTemplate", () => {
         {
             name: "default template shape",
             template:
-                "{% if image %}![[{{image}}]]{% endif %}\n{{selection}}\n{{highlights}}\n{% if image || selection || highlights %}---{% endif %}\n{{content}}",
+                "{{\"short summary of the page, like 3 sentences, just output the summary\"}}\n\n{% if image %}![[{{image}}]]{% endif %}\n\n{{selection}}\n\n{{highlights | join:'\\n\\n'}}\n\n{% if image || selection || highlights %}---{% endif %}\n\n{{content}}",
             variables: { image: "", selection: "", highlights: [], content: "Body text" },
-            expected: "\n\n\n\nBody text",
+            expected:
+                "short summary of the page, like 3 sentences, just output the summary\n\n\n\n\n\n\n\nBody text",
         },
     ]
 
     for (const testCase of cases) {
         it(testCase.name, async () => {
-            const result = await renderTemplate(testCase.template, {
+            const result = await render(testCase.template, {
                 variables: testCase.variables ?? {},
-                resolveSelector: (query, attr) => {
-                    const key = `${query}${attr ? `?${attr}` : ""}`
-                    return SELECTOR_MAP[key] ?? []
-                },
             })
             expect(result).toBe(testCase.expected)
         })
     }
 
+    it("renders the default template content with image, selection and highlights", async () => {
+        const result = await render(DEFAULT_TEMPLATE.content, {
+            variables: {
+                image: "https://cdn.example.com/cover.jpg",
+                selection: "Sel text",
+                highlights: ["first", "second"],
+                content: "Body",
+            },
+        })
+        expect(result).toBe(
+            "short summary of the page, like 3 sentences, just output the summary\n\n" +
+                "![[https://cdn.example.com/cover.jpg]]\n\nSel text\n\nfirst\n\nsecond\n\n---\n\nBody",
+        )
+    })
+
+    it("throws on unknown filters", async () => {
+        await expect(render("{{ title|nope }}", { variables: { title: "Hi" } })).rejects.toThrow(
+            'Unknown filter "nope"',
+        )
+    })
+
+    it("throws on parse errors", async () => {
+        await expect(render("Hello {{ title")).rejects.toThrow("Missing closing }}")
+    })
+
+    it("formats template errors with location", () => {
+        expect(templateErrorMessage(new Error("plain"))).toBe("plain")
+        const errors = validateTemplate("{{ title|nope }}")
+        expect(templateErrorMessage({ errors })).toBe('Unknown filter "nope" (line 1, column 10)')
+    })
+
+    it("validates known filters", () => {
+        expect(validateTemplate("{{ title | upper }}")).toEqual([])
+        expect(validateTemplate("{{ title | nope }}")).toHaveLength(1)
+    })
+
     it("renders prompts through the interpreter", async () => {
-        const result = await renderTemplate("{{title}} — {'summarize'}", {
+        const result = await render("{{title}} — {{'summarize'}}", {
             variables: { title: "T" },
             interpreter: async (prompt) => `<${prompt.toUpperCase()}>`,
         })
         expect(result).toBe("T — <SUMMARIZE>")
     })
 
+    it("applies filters to interpreter output on save", async () => {
+        const result = await render('{{"summarize" | upper | merge:"!" }}', {
+            interpreter: async (prompt) => prompt,
+        })
+        expect(result).toBe('["SUMMARIZE","!"]')
+    })
+
     it("keeps deferred variables in the source", async () => {
-        const result = await renderTemplate("# {{title}}\n{{highlights}}\n", {
+        const result = await render("# {{title}}\n{{highlights}}\n", {
             variables: { title: "T", highlights: ["a"] },
             deferred: ["highlights"],
         })
@@ -300,7 +375,7 @@ describe("renderTemplate", () => {
     })
 
     it("keeps deferred variables with pipes in the source", async () => {
-        const result = await renderTemplate("{{highlights | trim}}!", {
+        const result = await render("{{highlights | trim}}!", {
             variables: { highlights: "  x  " },
             deferred: ["highlights"],
         })
@@ -308,7 +383,7 @@ describe("renderTemplate", () => {
     })
 
     it("still evaluates deferred variables inside if conditions", async () => {
-        const result = await renderTemplate("{% if highlights %}[{{highlights}}]{% endif %}", {
+        const result = await render("{% if highlights %}[{{highlights}}]{% endif %}", {
             variables: { highlights: ["a"] },
             deferred: ["highlights"],
         })
@@ -316,33 +391,30 @@ describe("renderTemplate", () => {
     })
 
     it("resolves deferred variables once deferral is lifted", async () => {
-        const result = await renderTemplate("{{highlights}}", {
+        const result = await render("{{highlights | join:'\\n\\n'}}", {
             variables: { highlights: ["a", "b"] },
         })
         expect(result).toBe("a\n\nb")
     })
 
     it("keeps prompts in the source with keepPrompts", async () => {
-        const result = await renderTemplate("A {'summarize this'} B", {
-            variables: {},
+        const result = await render('A {{"summarize this"}} B', {
             keepPrompts: true,
         })
-        expect(result).toBe("A {'summarize this'} B")
+        expect(result).toBe('A {{"summarize this"}} B')
     })
 
     it("keeps prompts while resolving other variables", async () => {
-        const result = await renderTemplate("{{title}} {'summarize'}", {
+        const result = await render('{{title}} {{"summarize"}}', {
             variables: { title: "T" },
             keepPrompts: true,
         })
-        expect(result).toBe("T {'summarize'}")
+        expect(result).toBe('T {{"summarize"}}')
     })
 
     it("evaluates prompts through the interpreter when not kept", async () => {
-        const result = await renderTemplate("{'summarize'}", {
-            variables: {},
+        const result = await render('{{"summarize"}}', {
             interpreter: async (prompt) => `<${prompt.toUpperCase()}>`,
-            keepPrompts: false,
         })
         expect(result).toBe("<SUMMARIZE>")
     })

@@ -65,7 +65,7 @@ describe("DEFAULT_TEMPLATE", () => {
             variables: { ...CONTEXT, image: "", selection: "", highlights: [] },
         })
         expect(rendered).toBe(
-            "short summary of the page, like 3 sentences, just output the summary\n\n\n\n\n\n\n\n\n\nBody text",
+            "short summary of the page, like 3 sentences, just output the summary\n\n\n\n\n\n\n\nBody text",
         )
     })
 

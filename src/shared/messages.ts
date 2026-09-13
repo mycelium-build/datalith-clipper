@@ -20,7 +20,7 @@ export type BackgroundRequest =
     | { type: "interpreter-complete"; context: string; prompt: string }
 
 export type VaultsResponse =
-    | { ok: true; vaults: Array<{ name: string; path: string }> }
+    | { ok: true; vaults: Array<{ name: string; path: string }>; stale?: boolean }
     | { ok: false; error: string }
 
 export type SaveResponse =

@@ -672,6 +672,12 @@ export class Panel {
         }
         this.vaultSelect.disabled = false
         this.saveButton.disabled = false
+        if (response.stale) {
+            this.setStatus(
+                "Datalith is not running, showing the vaults from your last sync. Saving will launch it automatically.",
+                "muted",
+            )
+        }
         if (response.vaults.length === 0) {
             this.vaultSelect.append(
                 el("option", { text: "No vaults found", attributes: { value: "" } }),

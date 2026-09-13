@@ -32,8 +32,8 @@ export const DEFAULT_TEMPLATE: Template = {
         '{{"short summary of the page, like 3 sentences, just output the summary"}}\n\n' +
         "{% if image %}![[{{image}}]]{% endif %}\n\n" +
         "{{selection}}\n\n" +
-        "{{highlights | join:'\\n\\n'}}\n\n" +
-        "{% if image || selection || highlights %}---{% endif %}\n\n" +
+        "Highlights:\n\n{{highlights | join:'\\n\\n'}}\n\n" +
+        "---\n\n" +
         "{{content}}",
     context: "",
 }

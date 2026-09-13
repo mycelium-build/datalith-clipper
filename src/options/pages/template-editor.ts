@@ -1,6 +1,7 @@
 import browser from "webextension-polyfill"
 
 import { el } from "../../lib/dom"
+import { validateTemplate } from "../../lib/template"
 import type { Template } from "../../lib/templates"
 import type { VaultsResponse } from "../../shared/messages"
 import { dragHandle, makeSortable } from "../dnd"
@@ -42,18 +43,31 @@ const VARIABLES: Snippet[] = [
 ]
 
 const FUNCTIONS: Snippet[] = [
-    { label: 'calc:"+10"', insert: '|calc:"+10"' },
-    { label: "length", insert: "|length" },
-    { label: "round", insert: "|round" },
-    { label: "round:n", insert: "|round:2" },
+    { label: "upper", insert: "|upper" },
+    { label: "lower", insert: "|lower" },
+    { label: "trim", insert: "|trim" },
+    { label: "title", insert: "|title" },
+    { label: 'date:"fmt"', insert: '|date:"YYYY-MM-DD"' },
+    { label: 'date_modify:"expr"', insert: '|date_modify:"+1 day"' },
     { label: 'join:"sep"', insert: '|join:", "' },
-    { label: "merge:var", insert: "|merge:name" },
-    { label: "nth:n", insert: "|nth:3" },
+    { label: "list", insert: "|list" },
+    { label: "first", insert: "|first" },
+    { label: "last", insert: "|last" },
+    { label: "length", insert: "|length" },
     { label: "reverse", insert: "|reverse" },
+    { label: "unique", insert: "|unique" },
+    { label: "sort", insert: "|sort" },
+    { label: "nth:n", insert: "|nth:0" },
     { label: "slice:n,m", insert: "|slice:1,3" },
     { label: 'split:"sep"', insert: '|split:","' },
-    { label: "unique", insert: "|unique" },
-    { label: 'date_modify:"expr"', insert: '|date_modify:"+1 day"' },
+    { label: "merge", insert: "|merge:other" },
+    { label: 'calc:"+10"', insert: '|calc:"+10"' },
+    { label: "round:n", insert: "|round:2" },
+    { label: "truncate:n", insert: "|truncate:200" },
+    { label: "safe_name", insert: "|safe_name" },
+    { label: "wikilink", insert: "|wikilink" },
+    { label: "h2", insert: "|h2" },
+    { label: "blockquote", insert: "|blockquote" },
 ]
 
 const STATEMENTS: Snippet[] = [
@@ -67,8 +81,8 @@ const STATEMENTS: Snippet[] = [
         insert: "{% for item in items %}\n{{item}} {{loop.index}}\n{% endfor %}",
     },
     { label: "set", insert: "{% set name = author %}" },
-    { label: "fallback ??", insert: "{{ author ?? 'Unknown' }}" },
-    { label: "prompt", insert: '{"Summarize this page in one sentence"}' },
+    { label: "fallback ??", insert: '{{ author ?? "Unknown" }}' },
+    { label: "prompt", insert: '{{"Summarize this page in one sentence"}}' },
     { label: "logic", insert: "{% if (a < 10 || a > 100) && b == 10 %}\n\n{% endif %}" },
 ]
 
@@ -149,6 +163,8 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
                 "{{title}}",
                 (value) => (property.value = value),
             )
+            const valueError = el("div", { className: "field-error" })
+            attachValidation(valueField, valueError)
             const row = el("div", { className: "property-edit-row sortable-row" }, [
                 dragHandle("Drag to reorder"),
                 nameField,
@@ -157,6 +173,7 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
                     template.properties.splice(index, 1)
                     renderProperties()
                 }),
+                valueError,
             ])
             propertyRows.append(row)
         })
@@ -191,8 +208,8 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
                         triggerArea,
                         "One URL glob per line. Auto-selects this template when the page URL matches. Empty means manual selection.",
                     ),
-                    fieldRow("Note name", noteNameInput),
-                    fieldRow("Note folder", folderInput),
+                    validatedFieldRow("Note name", noteNameInput),
+                    validatedFieldRow("Note folder", folderInput),
                     fieldRow("Vault", vaultSelect),
                 ]),
                 pageSection("Properties", [
@@ -205,6 +222,7 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
                 ]),
                 pageSection("Content", [
                     contentArea,
+                    validatedContentError(contentArea),
                     el("div", {
                         className: "field-description",
                         text: "Markdown body of the note. Use variables, pipes and statements from the reference.",
@@ -212,9 +230,10 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
                 ]),
                 pageSection("Context", [
                     contextArea,
+                    validatedContentError(contextArea),
                     el("div", {
                         className: "field-description",
-                        text: 'Overrides the global interpreter context for {"prompt"} expressions in this template.',
+                        text: 'Overrides the global interpreter context for {{"prompt"}} expressions in this template.',
                     }),
                 ]),
             ]),
@@ -222,6 +241,38 @@ function buildEditor(ctx: PageContext, template: Template): HTMLElement {
         ]),
     )
     return container
+}
+
+function validatedFieldRow(
+    label: string,
+    control: HTMLInputElement | HTMLTextAreaElement,
+): HTMLElement {
+    const row = fieldRow(label, control)
+    const error = el("div", { className: "field-error" })
+    row.querySelector(".field-text")?.append(error)
+    attachValidation(control, error)
+    return row
+}
+
+function validatedContentError(control: HTMLTextAreaElement): HTMLElement {
+    const error = el("div", { className: "field-error" })
+    attachValidation(control, error)
+    return error
+}
+
+function attachValidation(
+    control: HTMLInputElement | HTMLTextAreaElement,
+    error: HTMLElement,
+): void {
+    const update = () => {
+        const first = validateTemplate(control.value)[0]
+        error.textContent = first
+            ? `${first.message} (line ${first.line}, column ${first.column})`
+            : ""
+        error.classList.toggle("is-visible", first !== undefined)
+    }
+    control.addEventListener("input", update)
+    update()
 }
 
 function referenceGroup(

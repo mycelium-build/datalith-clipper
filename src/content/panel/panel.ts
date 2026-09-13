@@ -9,7 +9,7 @@ import { renderWikilinkEmbeds } from "../../lib/markdown"
 import { loadSettings, saveSettings } from "../../lib/settings"
 import type { ClipperSettings } from "../../lib/settings-schema"
 import { resolveTheme } from "../../lib/settings-schema"
-import { renderTemplate } from "../../lib/template"
+import { renderTemplate, templateErrorMessage } from "../../lib/template"
 import {
     DEFAULT_TEMPLATE,
     LAST_USED_VAULT,
@@ -151,7 +151,7 @@ export class Panel {
             )
         } catch (error) {
             this.root.classList.remove("is-loading")
-            this.setStatus(`Template error — ${errorMessage(error)}`, "error")
+            this.setStatus(`Template error — ${templateErrorMessage(error)}`, "error")
             return
         }
         state.vault = template.vault === LAST_USED_VAULT ? settings.lastUsed.vault : template.vault
@@ -184,7 +184,7 @@ export class Panel {
                 })),
             )
         } catch (error) {
-            this.setStatus(`Template error — ${errorMessage(error)}`, "error")
+            this.setStatus(`Template error — ${templateErrorMessage(error)}`, "error")
             return
         }
         state.template = template
@@ -627,7 +627,7 @@ export class Panel {
             const html = marked.parse(renderWikilinkEmbeds(resolved), { async: false })
             this.previewPane.innerHTML = DOMPurify.sanitize(html)
         } catch (error) {
-            this.previewPane.textContent = `Template error — ${errorMessage(error)}`
+            this.previewPane.textContent = `Template error — ${templateErrorMessage(error)}`
         }
     }
 
@@ -726,7 +726,7 @@ export class Panel {
             }
         } catch (error) {
             this.saveButton.disabled = false
-            this.setStatus(`Template error — ${errorMessage(error)}`, "error")
+            this.setStatus(`Template error — ${templateErrorMessage(error)}`, "error")
             return
         }
         const response = (await browser.runtime.sendMessage({

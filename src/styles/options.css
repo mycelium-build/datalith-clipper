@@ -176,6 +176,18 @@
     font-size: 0.75rem;
 }
 
+.field-error {
+    color: var(--dl-red);
+    display: none;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+
+    &.is-visible {
+        display: block;
+    }
+}
+
 .vault-select {
     flex: 1;
 }
@@ -604,5 +616,9 @@ a.list-title:hover {
 
     .icon-button {
         flex: none;
+    }
+
+    .field-error.is-visible {
+        flex-basis: 100%;
     }
 }

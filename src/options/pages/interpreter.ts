@@ -30,7 +30,7 @@ export function renderInterpreter(ctx: PageContext): HTMLElement {
                     interpreter.enabled = value
                     ctx.save()
                 }),
-                'Evaluates {"prompt"} expressions in templates with the selected model.',
+                'Evaluates {{"prompt"}} expressions in templates with the selected model.',
             ),
             fieldRow(
                 "Execute when panel opens",

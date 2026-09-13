@@ -29,10 +29,10 @@ export const DEFAULT_TEMPLATE: Template = {
         { name: "tags", value: "clips" },
     ],
     content:
-        '{"short summary of the page, like 3 sentences, just output the summary"}\n\n' +
+        '{{"short summary of the page, like 3 sentences, just output the summary"}}\n\n' +
         "{% if image %}![[{{image}}]]{% endif %}\n\n" +
         "{{selection}}\n\n" +
-        "{{highlights}}\n\n" +
+        "{{highlights | join:'\\n\\n'}}\n\n" +
         "{% if image || selection || highlights %}---{% endif %}\n\n" +
         "{{content}}",
     context: "",

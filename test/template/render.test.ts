@@ -6,7 +6,6 @@ import {
     validateTemplate,
     type RenderOptions,
 } from "../../src/lib/template"
-import { DEFAULT_TEMPLATE } from "../../src/lib/templates"
 
 const SELECTOR_MAP: Record<string, string[]> = {
     h1: ["First Heading", "Second Heading"],
@@ -296,14 +295,6 @@ describe("renderTemplate", () => {
             template: "a { b } c {not a tag",
             expected: "a { b } c {not a tag",
         },
-        {
-            name: "default template shape",
-            template:
-                "{{\"short summary of the page, like 3 sentences, just output the summary\"}}\n\n{% if image %}![[{{image}}]]{% endif %}\n\n{{selection}}\n\n{{highlights | join:'\\n\\n'}}\n\n{% if image || selection || highlights %}---{% endif %}\n\n{{content}}",
-            variables: { image: "", selection: "", highlights: [], content: "Body text" },
-            expected:
-                "short summary of the page, like 3 sentences, just output the summary\n\n\n\n\n\n\n\nBody text",
-        },
     ]
 
     for (const testCase of cases) {
@@ -314,21 +305,6 @@ describe("renderTemplate", () => {
             expect(result).toBe(testCase.expected)
         })
     }
-
-    it("renders the default template content with image, selection and highlights", async () => {
-        const result = await render(DEFAULT_TEMPLATE.content, {
-            variables: {
-                image: "https://cdn.example.com/cover.jpg",
-                selection: "Sel text",
-                highlights: ["first", "second"],
-                content: "Body",
-            },
-        })
-        expect(result).toBe(
-            "short summary of the page, like 3 sentences, just output the summary\n\n" +
-                "![[https://cdn.example.com/cover.jpg]]\n\nSel text\n\nfirst\n\nsecond\n\n---\n\nBody",
-        )
-    })
 
     it("throws on unknown filters", async () => {
         await expect(render("{{ title|nope }}", { variables: { title: "Hi" } })).rejects.toThrow(

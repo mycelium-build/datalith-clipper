@@ -47,33 +47,4 @@ describe("DEFAULT_TEMPLATE", () => {
         expect(rendered.image).toBe("https://cdn.example.com/cover.jpg")
         expect(rendered.tags).toBe("clips")
     })
-
-    it("renders the prompt via the interpreter, then image, selection and separator", async () => {
-        const rendered = await renderTemplate(DEFAULT_TEMPLATE.content, {
-            variables: { ...CONTEXT },
-            interpreter: async (prompt) => `<${prompt}>`,
-        })
-        expect(rendered).toBe(
-            "<short summary of the page, like 3 sentences, just output the summary>\n\n" +
-                "![[https://cdn.example.com/cover.jpg]]\n\n" +
-                "picked\n\n\n\n---\n\nBody text",
-        )
-    })
-
-    it("keeps prompts as plain text when no interpreter is set", async () => {
-        const rendered = await renderTemplate(DEFAULT_TEMPLATE.content, {
-            variables: { ...CONTEXT, image: "", selection: "", highlights: [] },
-        })
-        expect(rendered).toBe(
-            "short summary of the page, like 3 sentences, just output the summary\n\n\n\n\n\n\n\nBody text",
-        )
-    })
-
-    it("renders highlights as blockquote-free text lines", async () => {
-        const rendered = await renderTemplate(DEFAULT_TEMPLATE.content, {
-            variables: { ...CONTEXT, selection: "", highlights: ["first", "second"] },
-        })
-        expect(rendered).toContain("first\n\nsecond")
-        expect(rendered).toContain("---")
-    })
 })

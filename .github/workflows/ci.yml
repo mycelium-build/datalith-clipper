@@ -6,8 +6,18 @@ on:
         branches:
             - main
 
+# Cancel superseded PR runs only; every push to main keeps its own result.
+concurrency:
+    group: ci-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
     contents: read
+
+env:
+    # Pinned tag of mycelium-build/datalith-app whose assets are bundled. Bump it deliberately in a commit:
+    # tracking `main` makes a CI result depend on a repository this commit does not contain.
+    DATALITH_SOURCE_REF: v1.1.0
 
 jobs:
     quality:
@@ -37,27 +47,24 @@ jobs:
 
             - name: Sync assets
               env:
-                  DATALITH_SOURCE_REF: main
                   DATALITH_READ_TOKEN: ${{ steps.app-token.outputs.token }}
               run: npm run sync-assets
 
-            - name: Build
-              run: npm run build
-
-            - name: Package
-              run: npm run package
+            # Cheapest checks first so a formatting or lint error fails before the build.
+            - name: Check formatting
+              run: npm run fmt:check
 
             - name: Lint
               run: npm run lint
 
-            - name: Check formatting
-              run: npm run fmt:check
+            - name: Check license notices
+              run: npm run licenses:check
+
+            - name: Build
+              run: npm run build
 
             - name: Typecheck
               run: npm run typecheck
 
             - name: Run tests
               run: npm test
-
-            - name: Check license notices
-              run: npm run licenses:check

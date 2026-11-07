@@ -1,0 +1,52 @@
+name: Security audit
+
+# Advisories change over time, not with a commit: check them once a day on main instead of on every PR.
+on:
+    schedule:
+        - cron: "17 6 * * *"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: audit
+    cancel-in-progress: false
+
+jobs:
+    audit:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            issues: write
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: main
+
+            - name: Set up Node.js
+              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: 24
+
+            - name: Audit dependencies
+              id: audit
+              run: |
+                  set -o pipefail
+                  npm audit --audit-level=high 2>&1 | tee audit.txt
+
+            - name: Report failure in an issue
+              if: failure() && steps.audit.outcome == 'failure'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              run: |
+                  title="npm audit found vulnerable dependencies"
+                  body="$(printf 'The daily `npm audit --audit-level=high` failed on `main`.\n\nRun: %s\n\n```\n%s\n```\n' "$RUN_URL" "$(head -c 50000 audit.txt)")"
+                  existing="$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')"
+                  if [ -n "$existing" ]; then
+                      gh issue comment "$existing" --body "$body"
+                  else
+                      gh issue create --title "$title" --body "$body"
+                  fi

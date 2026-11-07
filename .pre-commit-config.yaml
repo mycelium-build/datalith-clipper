@@ -1,0 +1,54 @@
+# Local Git hooks that mirror CI checks. Managed with prek (a pre-commit compatible runner):
+#   prek install          # once per clone; installs the pre-commit and pre-push hooks
+#   prek run --all-files  # run every pre-commit hook on the whole tree
+# Bypass once with `git commit --no-verify` / `git push --no-verify`. See CONTRIBUTING.md.
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
+repos:
+    - repo: local
+      hooks:
+          # Same tool as CI's "Check formatting" step, limited to the staged files.
+          - id: oxfmt
+            name: oxfmt --check
+            language: system
+            entry: npx --no-install oxfmt --check
+            types_or: [ts, tsx, javascript, json, css, markdown, yaml]
+            exclude: ^(package-lock\.json|THIRD-PARTY-NOTICES\.md)$
+
+          - id: oxlint
+            name: oxlint
+            language: system
+            entry: npx --no-install oxlint
+            types_or: [ts, tsx, javascript]
+
+          - id: stylelint
+            name: stylelint
+            language: system
+            entry: npx --no-install stylelint
+            files: ^src/styles/[^/]+\.css$
+
+          # The inputs of CI's "Check license notices" step.
+          - id: licenses-check
+            name: licenses:check
+            language: system
+            entry: npm run --silent licenses:check
+            files: ^(package-lock\.json|THIRD-PARTY-NOTICES\.md|scripts/licenses/)
+            pass_filenames: false
+
+          # Same commands as CI's "Typecheck" and "Run tests" steps, on push only.
+          - id: typecheck
+            name: tsc --noEmit
+            language: system
+            entry: npm run --silent typecheck
+            files: \.(ts|tsx|json)$
+            pass_filenames: false
+            stages: [pre-push]
+
+          - id: vitest
+            name: vitest run
+            language: system
+            entry: npm test --silent
+            files: ^(src|test|scripts)/|^package(-lock)?\.json$
+            pass_filenames: false
+            stages: [pre-push]

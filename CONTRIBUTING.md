@@ -51,6 +51,7 @@ npm run licenses:check
 
 - Node.js and npm
 - Git
+- [prek](https://prek.j178.dev), to run the Git hooks
 - A checkout of the Datalith repository at `../datalith-app`, or a local source path configured with `DATALITH_SOURCE_DIR`
 
 ### Installation
@@ -62,20 +63,39 @@ npm run licenses:check
     cd datalith-clipper
     ```
 
-2. Install dependencies and build:
+2. Install dependencies and enable the Git hooks:
 
     ```bash
     npm ci
+    brew install prek        # or: uv tool install prek, or: cargo install --locked prek
+    prek install
+    ```
+
+    `prek install` reads `.pre-commit-config.yaml` and installs both hooks once for the clone:
+
+    | Hook       | Runs when                                        | Checks                                 |
+    | ---------- | ------------------------------------------------ | -------------------------------------- |
+    | pre-commit | staged files                                     | `oxfmt --check`, `oxlint`, `stylelint` |
+    | pre-commit | lockfile, notices or license scripts are staged  | `npm run licenses:check`               |
+    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`        |
+
+    Run every pre-commit hook on the whole tree with `prek run --all-files`.
+    Bypass a hook once with `--no-verify`; CI runs the same checks.
+    The pre-push typecheck needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.
+
+3. Build:
+
+    ```bash
     npm run sync-assets
     npm run build        # bundles to dist/chrome and dist/firefox
     ```
 
-3. Load the unpacked extension:
+4. Load the unpacked extension:
 
     - **Chrome**: `chrome://extensions` → Developer mode → Load unpacked → `dist/chrome`
     - **Firefox**: `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → pick any file in `dist/firefox`
 
-4. Rebuild on change while developing:
+5. Rebuild on change while developing:
 
     ```bash
     npm run watch

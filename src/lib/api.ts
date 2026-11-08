@@ -11,9 +11,17 @@ export interface SaveNoteRequest {
     content: string
 }
 
+export const SUPPORTED_API_VERSION = 1
+
+export interface PingResponse {
+    app: "datalith"
+    version: string
+    apiVersion: number
+}
+
 export type ApiResult<T> =
     | { ok: true; data: T }
-    | { ok: false; error: string; kind: "unreachable" | "http" }
+    | { ok: false; error: string; kind: "unreachable" | "http" | "incompatible" }
 
 export class ClipperApi {
     private baseUrl: string
@@ -26,15 +34,56 @@ export class ClipperApi {
         this.fetchImpl = fetchImpl
     }
 
-    async ping(): Promise<ApiResult<{ version?: string }>> {
-        return this.request("GET", "/ping")
+    async ping(): Promise<ApiResult<PingResponse>> {
+        const result = await this.request<unknown>("GET", "/ping")
+        if (!result.ok) return result
+        const data = result.data
+        if (
+            !data ||
+            typeof data !== "object" ||
+            !("app" in data) ||
+            data.app !== "datalith" ||
+            !("version" in data) ||
+            typeof data.version !== "string"
+        ) {
+            return { ok: false, error: "Malformed response from Datalith", kind: "http" }
+        }
+        if (!("apiVersion" in data)) {
+            return {
+                ok: false,
+                error: "This Datalith app does not report an API version. Update Datalith to use this Clipper.",
+                kind: "incompatible",
+            }
+        }
+        if (
+            typeof data.apiVersion !== "number" ||
+            !Number.isInteger(data.apiVersion) ||
+            data.apiVersion < 1
+        ) {
+            return { ok: false, error: "Malformed API version from Datalith", kind: "http" }
+        }
+        if (data.apiVersion !== SUPPORTED_API_VERSION) {
+            return {
+                ok: false,
+                error: `Datalith API ${data.apiVersion} is not supported by this Clipper (API ${SUPPORTED_API_VERSION}). Update Datalith Clipper.`,
+                kind: "incompatible",
+            }
+        }
+        return {
+            ok: true,
+            data: { app: "datalith", version: data.version, apiVersion: data.apiVersion },
+        }
     }
 
     async vaults(): Promise<ApiResult<Vault[]>> {
+        const compatibility = await this.ping()
+        if (!compatibility.ok) return compatibility
         return this.request<Vault[]>("GET", "/api/vaults")
     }
 
     async saveNote(note: SaveNoteRequest): Promise<ApiResult<{ path: string }>> {
+        const compatibility = await this.ping()
+        if (!compatibility.ok) return compatibility
         return this.request("POST", "/api/notes", note)
     }
 

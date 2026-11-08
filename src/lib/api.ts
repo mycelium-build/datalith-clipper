@@ -16,7 +16,7 @@ export const SUPPORTED_API_VERSION = 1
 export interface PingResponse {
     app: "datalith"
     version: string
-    apiVersion: number
+    api_version: number
 }
 
 export type ApiResult<T> =
@@ -48,7 +48,7 @@ export class ClipperApi {
         ) {
             return { ok: false, error: "Malformed response from Datalith", kind: "http" }
         }
-        if (!("apiVersion" in data)) {
+        if (!("api_version" in data)) {
             return {
                 ok: false,
                 error: "This Datalith app does not report an API version. Update Datalith to use this Clipper.",
@@ -56,22 +56,22 @@ export class ClipperApi {
             }
         }
         if (
-            typeof data.apiVersion !== "number" ||
-            !Number.isInteger(data.apiVersion) ||
-            data.apiVersion < 1
+            typeof data.api_version !== "number" ||
+            !Number.isInteger(data.api_version) ||
+            data.api_version < 1
         ) {
             return { ok: false, error: "Malformed API version from Datalith", kind: "http" }
         }
-        if (data.apiVersion !== SUPPORTED_API_VERSION) {
+        if (data.api_version !== SUPPORTED_API_VERSION) {
             return {
                 ok: false,
-                error: `Datalith API ${data.apiVersion} is not supported by this Clipper (API ${SUPPORTED_API_VERSION}). Update Datalith Clipper.`,
+                error: `Datalith API ${data.api_version} is not supported by this Clipper (API ${SUPPORTED_API_VERSION}). Update Datalith Clipper.`,
                 kind: "incompatible",
             }
         }
         return {
             ok: true,
-            data: { app: "datalith", version: data.version, apiVersion: data.apiVersion },
+            data: { app: "datalith", version: data.version, api_version: data.api_version },
         }
     }
 

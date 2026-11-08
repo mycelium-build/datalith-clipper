@@ -123,7 +123,7 @@ npm run licenses:check
 ## Datalith API compatibility
 
 The Clipper supports Datalith local API version 1. Before listing vaults or saving a note,
-it calls `/ping` and checks `apiVersion`, independently of the app's release version.
+it calls `/ping` and checks `api_version`, independently of the app's release version.
 An unsupported API or an older app without this field shows an update message; no vault
 request or note write is sent. An unreachable app still follows the existing launch and
 retry flow. The check runs for each operation so restarting Datalith cannot leave a stale
@@ -133,7 +133,7 @@ API version 1 covers `/api/vaults` and `/api/notes`. Breaking changes to this co
 require a new API version and corresponding client support. Additive changes can retain
 version 1. Asset provenance is separate from this API compatibility check.
 
-Publish the Datalith app release that introduces `apiVersion` before distributing this
+Publish the Datalith app release that introduces `api_version` before distributing this
 Clipper version: older apps, including Datalith 1.1.0, do not expose this field.
 
 ## Dependency updates

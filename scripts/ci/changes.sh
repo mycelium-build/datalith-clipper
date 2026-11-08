@@ -35,18 +35,18 @@ is_excluded() {
         .github/*) return 0 ;;
         README.md | CHANGELOG.md | CONTRIBUTING.md) return 0 ;;
         docs/*) return 0 ;;
-        .pre-commit-config.yaml | renovate.json | .env.example) return 0 ;;
+        .pre-commit-config.yaml | renovate.json | .env.example | release-please-config.json | .release-please-manifest.json) return 0 ;;
         scripts/hooks/* | scripts/renovate-post-upgrade.sh) return 0 ;;
         *) return 1 ;;
     esac
 }
 
 # Inputs of licenses:check: lockfile, package.json, notices, project license, license scripts and the
-# pinned datalith-app ref (its license files are bundled assets).
+# source resolver (its license files are bundled assets).
 is_license_input() {
     case "$1" in
         package.json | package-lock.json | THIRD-PARTY-NOTICES.md | LICENSE) return 0 ;;
-        scripts/licenses/* | .github/workflows/ci.yml) return 0 ;;
+        scripts/licenses/* | scripts/lib/source.ts | scripts/sync-assets.ts | .github/workflows/ci.yml) return 0 ;;
         *) return 1 ;;
     esac
 }

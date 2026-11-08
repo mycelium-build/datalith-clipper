@@ -1,5 +1,5 @@
 /* oxlint-disable no-await-in-loop */
-import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises"
+import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -7,6 +7,8 @@ import { build, type BuildOptions } from "rolldown"
 
 import { buildIcons } from "./build-icons.ts"
 import { buildThemes } from "./build-themes.ts"
+import { renderNotices } from "./licenses/render.ts"
+import { syncAssets } from "./sync-assets.ts"
 
 const extensionRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const distRoot = path.join(extensionRoot, "dist")
@@ -88,7 +90,7 @@ async function bundle(target: Target, watch: boolean): Promise<void> {
     await build(options)
 }
 
-async function copyStatic(target: Target): Promise<void> {
+async function copyStatic(target: Target, notices: string): Promise<void> {
     const dir = path.join(distRoot, target)
     await mkdir(path.join(dir, "options"), { recursive: true })
     await mkdir(path.join(dir, "styles"), { recursive: true })
@@ -100,37 +102,29 @@ async function copyStatic(target: Target): Promise<void> {
         if (!file.endsWith(".css")) continue
         await cp(path.join(extensionRoot, "src", "styles", file), path.join(dir, "styles", file))
     }
+    await cp(path.join(extensionRoot, "LICENSE"), path.join(dir, "LICENSE"))
+    await writeFile(path.join(dir, "THIRD-PARTY-NOTICES.md"), notices)
     const publicDirectory = path.join(extensionRoot, "public")
-    try {
-        await cp(publicDirectory, dir, { recursive: true })
-    } catch {
-        // No public assets synced yet.
-    }
+    await cp(publicDirectory, dir, { recursive: true })
 }
 
 async function main(): Promise<void> {
     const watch = process.argv.includes("--watch")
-    // Direct builds (skipping prebuild) still need generated inputs.
-    if (!watch) {
-        try {
-            await readFile(path.join(extensionRoot, "src", "styles", "themes.css"))
-        } catch {
-            await buildThemes()
-        }
-        try {
-            await readFile(path.join(extensionRoot, "src", "lib", "icons.ts"))
-        } catch {
-            await buildIcons()
-        }
-    }
+    const assetRef = await syncAssets()
+    await buildThemes()
+    await buildIcons()
+    const notices = await renderNotices()
+    // Remove stale files as well as updating existing ones.
+    await rm(distRoot, { recursive: true, force: true })
 
     for (const target of targets) {
         await mkdir(path.join(distRoot, target), { recursive: true })
         await writeManifest(target)
-        await copyStatic(target)
+        await copyStatic(target, notices)
         await bundle(target, watch)
         console.log(`Built ${target} → dist/${target}`)
     }
+    await writeFile(path.join(distRoot, "assets-tag.txt"), `${assetRef}\n`)
     if (watch) {
         console.log("Watching for changes…")
     }

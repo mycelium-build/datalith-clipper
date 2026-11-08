@@ -52,7 +52,7 @@ npm run licenses:check
 - Node.js and npm
 - Git
 - [prek](https://prek.j178.dev), to run the Git hooks
-- A checkout of the Datalith repository at `../datalith-app`, or a local source path configured with `DATALITH_SOURCE_DIR`
+- GitHub access to download public assets from the latest stable Datalith release
 
 ### Installation
 
@@ -84,12 +84,11 @@ npm run licenses:check
     A `licenses:check` failure that regenerating the notices does not explain stops the commit.
     Run every pre-commit hook on the whole tree with `prek run --all-files`.
     Bypass a hook once with `--no-verify`; CI runs the same checks.
-    The pre-push check needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.
+    The pre-push check fetches assets and generates its inputs automatically.
 
 3. Build:
 
     ```bash
-    npm run sync-assets
     npm run build        # bundles to dist/chrome and dist/firefox
     ```
 
@@ -123,6 +122,28 @@ npm run licenses:check
 ## Dependency updates
 
 Dependency updates are opened by a self-hosted Renovate run from datalith-app (`renovate.json`); its Dependency Dashboard is an issue of this repository. After an npm update, `scripts/renovate-post-upgrade.sh` regenerates `THIRD-PARTY-NOTICES.md`.
+
+## Asset sources
+
+Every build and watch startup syncs assets from the latest stable Datalith release,
+then regenerates icons, themes and bundled license notices. Development overrides
+can be set in `.env` or on the command line:
+
+```bash
+DATALITH_SOURCE_REF=main npm run build
+DATALITH_SOURCE_REF=v1.1.0 npm run build
+DATALITH_SOURCE_DIR=../datalith-app npm run build
+```
+
+Local directory overrides are refused in CI. Stable tags are cached under `.cache/`;
+branches are refreshed on each build. Restart watch mode to refresh assets.
+Public clones need no token; `GH_TOKEN`, `GITHUB_TOKEN` or `DATALITH_READ_TOKEN`
+can raise the GitHub API rate limit.
+
+`npm run check` fetches current assets, checks their licenses and committed npm
+notices, then generates themes/icons before checking the project. It works without
+a prior build. `npm run licenses:check` also fetches assets when run on its own.
+Each build includes complete notices for the assets it bundles.
 
 ## Our stance on AI
 

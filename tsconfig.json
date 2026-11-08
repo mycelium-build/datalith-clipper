@@ -23,5 +23,5 @@
         "isolatedModules": true
     },
     "include": ["**/*"],
-    "exclude": ["dist"]
+    "exclude": ["dist", ".cache"]
 }

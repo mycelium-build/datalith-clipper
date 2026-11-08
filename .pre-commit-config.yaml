@@ -8,11 +8,11 @@ default_stages: [pre-commit]
 repos:
     - repo: local
       hooks:
-          # Same tool as CI's "Check formatting" step, limited to the staged files.
+          # Formats the committed files with oxfmt and stages the result.
           - id: oxfmt
-            name: oxfmt --check
+            name: oxfmt
             language: system
-            entry: npx --no-install oxfmt --check
+            entry: scripts/hooks/oxfmt.sh
             types_or: [ts, tsx, javascript, json, css, markdown, yaml]
             exclude: ^(package-lock\.json|THIRD-PARTY-NOTICES\.md)$
 
@@ -28,12 +28,12 @@ repos:
             entry: npx --no-install stylelint
             files: ^src/styles/[^/]+\.css$
 
-          # The inputs of CI's "Check license notices" step.
+          # The inputs of CI's "Check license notices" step. Regenerates and stages stale notices.
           - id: licenses-check
-            name: licenses:check
+            name: license notices
             language: system
-            entry: npm run --silent licenses:check
-            files: ^(package-lock\.json|THIRD-PARTY-NOTICES\.md|scripts/licenses/)
+            entry: scripts/hooks/license-notices.sh
+            files: ^(package\.json|package-lock\.json|THIRD-PARTY-NOTICES\.md|LICENSE|scripts/licenses/)
             pass_filenames: false
 
           # Same commands as CI's "Typecheck" and "Run tests" steps, on push only.

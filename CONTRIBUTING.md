@@ -73,12 +73,15 @@ npm run licenses:check
 
     `prek install` reads `.pre-commit-config.yaml` and installs both hooks once for the clone:
 
-    | Hook       | Runs when                                        | Checks                                 |
-    | ---------- | ------------------------------------------------ | -------------------------------------- |
-    | pre-commit | staged files                                     | `oxfmt --check`, `oxlint`, `stylelint` |
-    | pre-commit | lockfile, notices or license scripts are staged  | `npm run licenses:check`               |
-    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`        |
+    | Hook       | Runs when                                        | What it does                                                      |
+    | ---------- | ------------------------------------------------ | ----------------------------------------------------------------- |
+    | pre-commit | staged files                                     | `oxfmt` formats them and stages the result; `oxlint`, `stylelint` |
+    | pre-commit | `package*.json`, notices or license files staged | `licenses:check`; stale notices are regenerated and staged        |
+    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`                                   |
 
+    The formatting and notice fixes only touch what you staged: prek sets unstaged changes aside while the hooks run.
+    If a fix conflicts with unstaged changes in the same file, prek drops it and stops the commit; format or stage the file yourself and commit again.
+    A `licenses:check` failure that regenerating the notices does not explain stops the commit.
     Run every pre-commit hook on the whole tree with `prek run --all-files`.
     Bypass a hook once with `--no-verify`; CI runs the same checks.
     The pre-push typecheck needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.

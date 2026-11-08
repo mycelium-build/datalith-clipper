@@ -160,7 +160,7 @@ and `!` or `BREAKING CHANGE` a major, including before 1.0. `chore:` alone does
 not propose a release.
 
 After successful CI on `main`, release-please opens a version and changelog PR.
-Merging it creates a `vX.Y.Z` tag and draft release. The release workflow builds,
+Merging it immediately creates a `vX.Y.Z` tag and draft release, as in the app. The release workflow builds,
 checks and packages Chrome/Firefox, records the asset tag in the release notes,
 and publishes the ZIPs. There is no automatic PR merge or store publication.
 

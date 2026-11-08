@@ -128,8 +128,6 @@ A missing or older API version asks the user to update Datalith; a newer version
 for a Clipper update. Both block vault requests and note writes. The check runs for each
 operation; an unreachable app keeps the existing launch-and-retry behavior.
 
-Publish the app release exposing `api_version` before distributing this Clipper version.
-
 ## Dependency updates
 
 Dependency updates are opened by a self-hosted Renovate run from datalith-app (`renovate.json`); its Dependency Dashboard is an issue of this repository. After an npm update, `scripts/renovate-post-upgrade.sh` regenerates `THIRD-PARTY-NOTICES.md`.

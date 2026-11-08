@@ -84,7 +84,7 @@ npm run licenses:check
     A `licenses:check` failure that regenerating the notices does not explain stops the commit.
     Run every pre-commit hook on the whole tree with `prek run --all-files`.
     Bypass a hook once with `--no-verify`; CI runs the same checks.
-    The pre-push check needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.
+    The pre-push check fetches assets and generates its inputs automatically.
 
 3. Build:
 
@@ -140,9 +140,10 @@ branches are refreshed on each build. Restart watch mode to refresh assets.
 Public clones need no token; `GH_TOKEN`, `GITHUB_TOKEN` or `DATALITH_READ_TOKEN`
 can raise the GitHub API rate limit.
 
-CI checks committed npm notices with `licenses:check -- --dependencies-only`.
-Each build validates asset licenses and includes complete notices in both bundles.
-The full `licenses:check` remains available locally.
+`npm run check` fetches current assets, checks their licenses and committed npm
+notices, then generates themes/icons before checking the project. It works without
+a prior build. `npm run licenses:check` also fetches assets when run on its own.
+Each build includes complete notices for the assets it bundles.
 
 ## Releases
 

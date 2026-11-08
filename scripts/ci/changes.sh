@@ -41,12 +41,11 @@ is_excluded() {
     esac
 }
 
-# Inputs of licenses:check: lockfile, package.json, notices, project license, license scripts and the
-# source resolver (its license files are bundled assets).
+# Inputs of the dependency-only license check. Build validates asset licenses separately.
 is_license_input() {
     case "$1" in
         package.json | package-lock.json | THIRD-PARTY-NOTICES.md | LICENSE) return 0 ;;
-        scripts/licenses/* | scripts/lib/source.ts | scripts/sync-assets.ts | .github/workflows/ci.yml) return 0 ;;
+        scripts/licenses/* | .github/workflows/ci.yml) return 0 ;;
         *) return 1 ;;
     esac
 }

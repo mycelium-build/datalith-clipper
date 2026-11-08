@@ -30,7 +30,7 @@ jobs:
 
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  ref: ${{ env.RELEASE_TAG }}
+                  ref: refs/tags/${{ env.RELEASE_TAG }}
                   persist-credentials: false
 
             - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -38,36 +38,16 @@ jobs:
                   node-version: 24
                   cache: npm
 
-            - name: Check version and draft release
-              env:
-                  GH_TOKEN: ${{ github.token }}
+            - name: Check version
               run: |
                   node --input-type=module -e 'import fs from "node:fs"; if (`v${JSON.parse(fs.readFileSync("package.json")).version}` !== process.env.RELEASE_TAG) throw new Error("Tag and package version differ")'
-                  # Tag delivery can precede visibility of the draft created by release-please.
-                  found=false
-                  for attempt in {1..12}; do
-                      if draft=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null); then
-                          test "$draft" = true
-                          found=true
-                          break
-                      fi
-                      sleep 5
-                  done
-                  test "$found" = true
-
-            - name: Resolve the latest stable assets once for this build
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: |
-                  tag=$(gh api repos/mycelium-build/datalith-app/releases/latest --jq 'select(.draft == false and .prerelease == false) | .tag_name')
-                  [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
-                  echo "DATALITH_SOURCE_REF=$tag" >> "$GITHUB_ENV"
-
             - run: npm ci
             - run: npm run licenses:check -- --dependencies-only
             # A release always builds and validates its assets, even if main reused a PR's CI.
             # Build syncs assets, regenerates icons/themes and includes their license notices.
             - run: npm run build
+              env:
+                  GH_TOKEN: ${{ github.token }}
             - run: npm run check
             - run: npm test
             - run: npm run package
@@ -98,8 +78,18 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
                   GH_REPO: ${{ github.repository }}
               run: |
-                  # Re-running a published release must never replace its existing archives.
-                  test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+                  # Only the publishing job can read drafts; never replace published archives.
+                  # Tag delivery can precede visibility of the draft created by release-please.
+                  found=false
+                  for attempt in {1..12}; do
+                      if draft=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+                          test "$draft" = true
+                          found=true
+                          break
+                      fi
+                      sleep 5
+                  done
+                  test "$found" = true
                   gh release upload "$RELEASE_TAG" release/*.zip --clobber
                   gh release view "$RELEASE_TAG" --json body --jq .body > notes.md
                   node --input-type=module <<'JS'

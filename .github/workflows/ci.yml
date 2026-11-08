@@ -111,11 +111,6 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
-            - name: Sync assets
-              env:
-                  GH_TOKEN: ${{ github.token }}
-              run: npm run sync-assets
-
             # Assets move with stable releases. Keep the committed npm notices checked;
             # Build validates asset license files and renders complete notices into each ZIP.
             - name: Check dependency license notices

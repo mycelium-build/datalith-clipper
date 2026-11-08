@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process"
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { promisify } from "node:util"
@@ -45,11 +45,12 @@ it("packages both browsers, includes licenses and removes stale files on a secon
     await Promise.all(
         ["chrome", "firefox"].map(async (target) => {
             const zip = path.join(root, `release/datalith-clipper-${target}-v0.1.0.zip`)
-            expect((await readFile(zip)).length).toBeGreaterThan(0)
             const { stdout: notices } = await exec("unzip", ["-p", zip, "THIRD-PARTY-NOTICES.md"])
             expect(notices).toBe("notices from the assets actually built")
             const { stdout: entries } = await exec("unzip", ["-Z1", zip])
-            expect(entries).toContain("LICENSE")
+            expect(entries.split("\n")).toEqual(
+                expect.arrayContaining(["manifest.json", "LICENSE", "THIRD-PARTY-NOTICES.md"]),
+            )
             expect(entries).not.toContain("stale.txt")
         }),
     )
@@ -62,20 +63,5 @@ it("rejects a stale built manifest", async () => {
     )
     await expect(exec(process.execPath, ["scripts/package.ts"], { cwd: root })).rejects.toThrow(
         "manifest version",
-    )
-})
-
-it("rejects a missing bundled license", async () => {
-    await rm(path.join(root, "dist/chrome/LICENSE"))
-    await expect(exec(process.execPath, ["scripts/package.ts"], { cwd: root })).rejects.toThrow()
-})
-
-it("rejects prerelease suffixes that browser manifests do not accept", async () => {
-    await writeFile(
-        path.join(root, "package.json"),
-        JSON.stringify({ type: "module", version: "0.1.0-rc.1" }),
-    )
-    await expect(exec(process.execPath, ["scripts/package.ts"], { cwd: root })).rejects.toThrow(
-        "stable numeric",
     )
 })

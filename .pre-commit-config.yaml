@@ -13,6 +13,8 @@ repos:
             name: oxfmt
             language: system
             entry: scripts/hooks/oxfmt.sh
+            # One process: parallel batches would race on git add (.git/index.lock).
+            require_serial: true
             types_or: [ts, tsx, javascript, json, css, markdown, yaml]
             exclude: ^(package-lock\.json|THIRD-PARTY-NOTICES\.md)$
 

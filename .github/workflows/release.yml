@@ -64,13 +64,11 @@ jobs:
                   echo "DATALITH_SOURCE_REF=$tag" >> "$GITHUB_ENV"
 
             - run: npm ci
-            - run: npm run fmt:check
-            - run: npm run lint
             - run: npm run licenses:check -- --dependencies-only
             # A release always builds and validates its assets, even if main reused a PR's CI.
             # Build syncs assets, regenerates icons/themes and includes their license notices.
             - run: npm run build
-            - run: npm run typecheck
+            - run: npm run check
             - run: npm test
             - run: npm run package
 

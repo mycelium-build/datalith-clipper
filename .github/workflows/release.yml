@@ -42,13 +42,14 @@ jobs:
               run: |
                   node --input-type=module -e 'import fs from "node:fs"; if (`v${JSON.parse(fs.readFileSync("package.json")).version}` !== process.env.RELEASE_TAG) throw new Error("Tag and package version differ")'
             - run: npm ci
-            - run: npm run licenses:check -- --dependencies-only
             # A release always builds and validates its assets, even if main reused a PR's CI.
             # Build syncs assets, regenerates icons/themes and includes their license notices.
             - run: npm run build
               env:
                   GH_TOKEN: ${{ github.token }}
             - run: npm run check
+              env:
+                  GH_TOKEN: ${{ github.token }}
             - run: npm test
             - run: npm run package
 

@@ -13,12 +13,6 @@ export interface SaveNoteRequest {
 
 export const SUPPORTED_API_VERSION = 1
 
-export interface PingResponse {
-    app: "datalith"
-    version: string
-    api_version: number
-}
-
 export type ApiResult<T> =
     | { ok: true; data: T }
     | { ok: false; error: string; kind: "unreachable" | "http" | "incompatible" }
@@ -34,62 +28,30 @@ export class ClipperApi {
         this.fetchImpl = fetchImpl
     }
 
-    async ping(): Promise<ApiResult<PingResponse>> {
-        const result = await this.request<unknown>("GET", "/ping")
-        if (!result.ok) return result
-        const data = result.data
-        if (
-            !data ||
-            typeof data !== "object" ||
-            !("app" in data) ||
-            data.app !== "datalith" ||
-            !("version" in data) ||
-            typeof data.version !== "string"
-        ) {
-            return { ok: false, error: "Malformed response from Datalith", kind: "http" }
-        }
-        if (!("api_version" in data)) {
-            return {
-                ok: false,
-                error: "This Datalith app does not report an API version. Update Datalith to use this Clipper.",
-                kind: "incompatible",
-            }
-        }
-        if (
-            typeof data.api_version !== "number" ||
-            !Number.isInteger(data.api_version) ||
-            data.api_version < 0
-        ) {
-            return { ok: false, error: "Malformed API version from Datalith", kind: "http" }
-        }
-        if (data.api_version < SUPPORTED_API_VERSION) {
-            return {
-                ok: false,
-                error: `Datalith API ${data.api_version} is too old for this Clipper (API ${SUPPORTED_API_VERSION}). Update Datalith.`,
-                kind: "incompatible",
-            }
-        }
-        if (data.api_version > SUPPORTED_API_VERSION) {
-            return {
-                ok: false,
-                error: `Datalith API ${data.api_version} is not supported by this Clipper (API ${SUPPORTED_API_VERSION}). Update Datalith Clipper.`,
-                kind: "incompatible",
-            }
-        }
+    private async checkCompatibility(): Promise<ApiResult<null>> {
+        const ping = await this.request<{ api_version?: unknown } | null>("GET", "/ping")
+        if (!ping.ok) return ping
+        const version = ping.data?.api_version
+        if (version === SUPPORTED_API_VERSION) return { ok: true, data: null }
+        const outdated =
+            typeof version === "number" && version > SUPPORTED_API_VERSION
+                ? "Datalith Clipper"
+                : "Datalith"
         return {
-            ok: true,
-            data: { app: "datalith", version: data.version, api_version: data.api_version },
+            ok: false,
+            error: `This Clipper requires Datalith API ${SUPPORTED_API_VERSION}. Update ${outdated}.`,
+            kind: "incompatible",
         }
     }
 
     async vaults(): Promise<ApiResult<Vault[]>> {
-        const compatibility = await this.ping()
+        const compatibility = await this.checkCompatibility()
         if (!compatibility.ok) return compatibility
         return this.request<Vault[]>("GET", "/api/vaults")
     }
 
     async saveNote(note: SaveNoteRequest): Promise<ApiResult<{ path: string }>> {
-        const compatibility = await this.ping()
+        const compatibility = await this.checkCompatibility()
         if (!compatibility.ok) return compatibility
         return this.request("POST", "/api/notes", note)
     }

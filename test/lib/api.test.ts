@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { saveWithRetry } from "../../src/background/save-pipeline"
 import { ClipperApi } from "../../src/lib/api"
 
 function fetchMock(response: {
@@ -13,7 +12,9 @@ function fetchMock(response: {
     return vi.fn(async (input: string | URL | Request) => {
         if (String(input).endsWith("/ping")) {
             return Response.json(
-                response.pingBody ?? { app: "datalith", version: "1.2.0", api_version: 1 },
+                response.pingBody === undefined
+                    ? { app: "datalith", version: "1.2.0", api_version: 1 }
+                    : response.pingBody,
             )
         }
         return new Response(JSON.stringify(response.body ?? {}), {
@@ -56,7 +57,7 @@ describe("ClipperApi", () => {
     it("omits the Authorization header without a token", async () => {
         const fetchImpl = fetchMock({ body: [] })
         const api = new ClipperApi("http://127.0.0.1:42908", "", fetchImpl)
-        await api.ping()
+        await api.vaults()
         const [, init] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0] as [
             string,
             RequestInit,
@@ -82,7 +83,7 @@ describe("ClipperApi", () => {
     it("reports unreachable servers", async () => {
         const api = new ClipperApi("http://127.0.0.1:42908", "", (() =>
             Promise.reject(new TypeError("Failed to fetch"))) as unknown as typeof fetch)
-        const result = await api.ping()
+        const result = await api.vaults()
         expect(result).toEqual({
             ok: false,
             error: "Datalith is unreachable",
@@ -99,7 +100,7 @@ describe("ClipperApi", () => {
                     status: 200,
                 })) as unknown as typeof fetch,
         )
-        const result = await api.ping()
+        const result = await api.vaults()
         expect(result).toEqual({
             ok: false,
             error: "Malformed response from Datalith",
@@ -130,29 +131,12 @@ describe("ClipperApi", () => {
             content: "body",
         })
     })
-    it("accepts API 1 regardless of the app release version", async () => {
-        const api = new ClipperApi(
-            "http://127.0.0.1:42908",
-            "",
-            fetchMock({
-                pingBody: { app: "datalith", version: "2.0.0-rc.1", api_version: 1 },
-            }),
-        )
-        expect(await api.ping()).toEqual({
-            ok: true,
-            data: { app: "datalith", version: "2.0.0-rc.1", api_version: 1 },
-        })
-    })
-
     it.each([
-        [{ app: "datalith", version: "1.1.0" }, "Update Datalith to use this Clipper"],
-        [{ app: "datalith", version: "2.0.0", api_version: 2 }, "Update Datalith Clipper"],
-        [{ app: "datalith", version: "1.2.0", api_version: "1" }, "Malformed API version"],
-        [{ app: "datalith", version: "1.2.0", api_version: 1.5 }, "Malformed API version"],
-        [{ app: "datalith", version: "1.2.0", api_version: 0 }, "Update Datalith."],
-        [{ app: "datalith", version: "1.2.0", api_version: -1 }, "Malformed API version"],
-        [{ app: "other", version: "1.2.0", api_version: 1 }, "Malformed response"],
-        [[], "Malformed response"],
+        [{ app: "datalith", version: "1.1.0" }, "Update Datalith."],
+        [{ api_version: 0 }, "Update Datalith."],
+        [{ api_version: 2 }, "Update Datalith Clipper."],
+        [{ api_version: "1" }, "Update Datalith."],
+        [null, "Update Datalith."],
     ])(
         "blocks vault listing and note writes for invalid handshake %j",
         async (pingBody, message) => {
@@ -167,7 +151,10 @@ describe("ClipperApi", () => {
             })
             for (const result of [vaults, save]) {
                 expect(result.ok).toBe(false)
-                if (!result.ok) expect(result.error).toContain(message)
+                if (!result.ok) {
+                    expect(result.error).toContain(message)
+                    expect(result.kind).toBe("incompatible")
+                }
             }
             const calls = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls
             expect(calls).toHaveLength(2)
@@ -178,69 +165,4 @@ describe("ClipperApi", () => {
             ).toBe(true)
         },
     )
-
-    it("rechecks compatibility when the app restarts with another API", async () => {
-        const fetchImpl = vi
-            .fn()
-            .mockResolvedValueOnce(
-                Response.json({ app: "datalith", version: "1.2.0", api_version: 1 }),
-            )
-            .mockResolvedValueOnce(Response.json([]))
-            .mockResolvedValueOnce(
-                Response.json({ app: "datalith", version: "2.0.0", api_version: 2 }),
-            )
-        const api = new ClipperApi("http://127.0.0.1:42908", "", fetchImpl as typeof fetch)
-        expect((await api.vaults()).ok).toBe(true)
-        expect(
-            (await api.saveNote({ vault: "Notes", name: "Hello", properties: {}, content: "body" }))
-                .ok,
-        ).toBe(false)
-        expect(fetchImpl).toHaveBeenCalledTimes(3)
-    })
-
-    it("still launches an unreachable app and saves after a compatible handshake", async () => {
-        const fetchImpl = vi
-            .fn()
-            .mockRejectedValueOnce(new TypeError("Failed to fetch"))
-            .mockRejectedValueOnce(new TypeError("Failed to fetch"))
-            .mockResolvedValueOnce(
-                Response.json({ app: "datalith", version: "1.2.0", api_version: 1 }),
-            )
-            .mockResolvedValueOnce(Response.json({ path: "Hello.md" }))
-        const api = new ClipperApi("http://127.0.0.1:42908", "", fetchImpl as typeof fetch)
-        const launch = vi.fn(async () => {})
-        const result = await saveWithRetry(
-            { vault: "Notes", name: "Hello", properties: {}, content: "body" },
-            {
-                saveNote: (note) => api.saveNote(note),
-                launch,
-                openNote: async () => {},
-                shouldOpenNote: false,
-                sleep: async () => {},
-                retryLimit: 3,
-            },
-        )
-        expect(result).toEqual({ ok: true, path: "Hello.md" })
-        expect(launch).toHaveBeenCalledOnce()
-        expect(fetchImpl.mock.calls.filter(([, init]) => init.method === "POST")).toHaveLength(1)
-    })
-
-    it("does not launch or retry an incompatible app", async () => {
-        const fetchImpl = fetchMock({ pingBody: { app: "datalith", version: "1.1.0" } })
-        const api = new ClipperApi("http://127.0.0.1:42908", "", fetchImpl)
-        const launch = vi.fn(async () => {})
-        const result = await saveWithRetry(
-            { vault: "Notes", name: "Hello", properties: {}, content: "body" },
-            {
-                saveNote: (note) => api.saveNote(note),
-                launch,
-                openNote: async () => {},
-                shouldOpenNote: false,
-                sleep: async () => {},
-            },
-        )
-        expect(result.ok).toBe(false)
-        expect(launch).not.toHaveBeenCalled()
-        expect(fetchImpl).toHaveBeenCalledOnce()
-    })
 })

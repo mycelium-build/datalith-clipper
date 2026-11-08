@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { Defuddle } from "defuddle/node"
 import { parseHTML } from "linkedom"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "vite-plus/test"
 
 import { buildContext } from "../../src/lib/extract"
 

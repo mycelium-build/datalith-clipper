@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vite-plus/test"
 
 import { saveWithRetry, type SavePipelineDeps } from "../../src/background/save-pipeline"
 import type { ApiResult, SaveNoteRequest } from "../../src/lib/api"

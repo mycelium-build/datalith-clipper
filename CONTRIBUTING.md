@@ -73,11 +73,11 @@ npm run licenses:check
 
     `prek install` reads `.pre-commit-config.yaml` and installs both hooks once for the clone:
 
-    | Hook       | Runs when                                        | What it does                                                      |
-    | ---------- | ------------------------------------------------ | ----------------------------------------------------------------- |
-    | pre-commit | staged files                                     | `oxfmt` formats them and stages the result; `oxlint`, `stylelint` |
-    | pre-commit | `package*.json`, notices or license files staged | `licenses:check`; stale notices are regenerated and staged        |
-    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`                                   |
+    | Hook       | Runs when                                        | What it does                                                        |
+    | ---------- | ------------------------------------------------ | ------------------------------------------------------------------- |
+    | pre-commit | staged files                                     | `vp fmt` formats them and stages the result; `vp lint`, `stylelint` |
+    | pre-commit | `package*.json`, notices or license files staged | `licenses:check`; stale notices are regenerated and staged          |
+    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`                                     |
 
     The formatting and notice fixes only touch what you staged: prek sets unstaged changes aside while the hooks run.
     If a fix conflicts with unstaged changes in the same file, prek drops it and stops the commit; format or stage the file yourself and commit again.
@@ -131,3 +131,9 @@ We allow PR made with AI, but you are responsible for your code. This implies th
 ## License
 
 By contributing to this project, you agree that your contributions will be licensed under the MIT License.
+
+## Toolchain
+
+Vite+ runs formatting, linting and tests through the existing `npm run fmt`, `npm run lint` and `npm test` commands. Their shared configuration is in `vite.config.ts`. Stylelint still checks CSS, and `npm run typecheck` keeps the existing TypeScript check. The Chrome/Firefox extension build remains the custom Rolldown script in `scripts/build.ts`.
+
+Keep `vite-plus`, its `vite` alias and the bundled Vitest override aligned; Renovate groups these updates.

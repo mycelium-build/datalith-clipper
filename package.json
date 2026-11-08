@@ -13,11 +13,11 @@
         "typecheck": "tsc --noEmit",
         "licenses:generate": "node scripts/licenses/generate.ts",
         "licenses:check": "node scripts/licenses/check.ts",
-        "test": "vitest run",
-        "lint": "oxlint && stylelint \"src/styles/*.css\"",
-        "lint:fix": "oxlint --fix && stylelint --fix \"src/styles/*.css\"",
-        "fmt": "oxfmt .",
-        "fmt:check": "oxfmt --check ."
+        "test": "vp test",
+        "lint": "vp lint && stylelint \"src/styles/*.css\"",
+        "lint:fix": "vp lint --fix && stylelint \"src/styles/*.css\"",
+        "fmt": "vp fmt",
+        "fmt:check": "vp fmt --check"
     },
     "dependencies": {
         "defuddle": "^0.19.3",
@@ -32,17 +32,20 @@
         "@types/webextension-polyfill": "^0.12.6",
         "generate-license-file": "4.2.5",
         "linkedom": "^0.18.13",
-        "oxfmt": "^0.66.0",
-        "oxlint": "^1.81.0",
         "policygen": "^0.6.0",
         "rolldown": "^1.2.7",
         "sharp": "^0.35.4",
         "stylelint": "^17.14.1",
         "stylelint-config-standard": "^40.0.0",
         "typescript": "^7.0.2",
-        "vitest": "^5.0.0"
+        "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
+        "vite-plus": "1.4.0"
     },
     "allowScripts": {
         "fsevents@2.3.3": true
+    },
+    "overrides": {
+        "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0",
+        "vitest": "5.0.5"
     }
 }

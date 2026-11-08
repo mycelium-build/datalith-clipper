@@ -119,6 +119,14 @@ npm run licenses:check
     npm run lint
     ```
 
+## Datalith API compatibility
+
+The Clipper supports Datalith local API version 1. Before listing vaults or saving a note,
+it calls `/ping` and checks `api_version`, independently of the app's release version.
+A missing or older API version asks the user to update Datalith; a newer version asks
+for a Clipper update. Both block vault requests and note writes. The check runs for each
+operation; an unreachable app keeps the existing launch-and-retry behavior.
+
 ## Dependency updates
 
 Dependency updates are opened by a self-hosted Renovate run from datalith-app (`renovate.json`); its Dependency Dashboard is an issue of this repository. After an npm update, `scripts/renovate-post-upgrade.sh` regenerates `THIRD-PARTY-NOTICES.md`.

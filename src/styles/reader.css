@@ -3,57 +3,50 @@
     position: fixed;
     inset: 0;
     z-index: 2147483647;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color-scheme: light dark;
-    font-family:
-        system-ui,
-        -apple-system,
-        "Segoe UI",
-        Roboto,
-        "Helvetica Neue",
-        Arial,
-        sans-serif;
 }
 
 .reader-root {
-    background: var(--dl-bg);
-    color: var(--dl-fg);
     display: flex;
     flex-direction: column;
     height: 100%;
+    color: var(--dl-fg);
+    background: var(--dl-bg);
 }
 
 .reader-header {
-    align-items: center;
-    background: var(--dl-surface);
-    border-bottom: 1px solid var(--dl-border);
     display: flex;
     flex: none;
     gap: 8px;
+    align-items: center;
     padding: 6px 10px;
+    background: var(--dl-surface);
+    border-bottom: 1px solid var(--dl-border);
 }
 
 .reader-title {
     flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-family: var(--font-pixel, "Pixeloid Sans", monospace);
     font-size: 12px;
     font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .icon-button {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    color: var(--dl-fg);
+    cursor: pointer;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
     border-radius: 4px;
-    color: var(--dl-fg);
-    cursor: pointer;
-    display: inline-flex;
-    height: 24px;
-    justify-content: center;
-    padding: 0;
-    width: 24px;
 
     &:hover {
         background: var(--dl-surface-alt);
@@ -64,8 +57,8 @@
     }
 
     svg {
-        height: 1em;
         width: 1em;
+        height: 1em;
     }
 }
 
@@ -75,27 +68,27 @@
 }
 
 .reader-article {
+    max-width: 72ch;
+    padding: 24px 20px 64px;
+    margin: 0 auto;
     font-family: var(--reader-font, system-ui, sans-serif);
     font-size: var(--reader-size, 16px);
     line-height: var(--reader-line-height, 1.6);
-    margin: 0 auto;
-    max-width: 72ch;
-    padding: 24px 20px 64px;
 
     a {
         color: var(--reader-link-color, inherit);
     }
 
     img {
-        height: auto;
         max-width: 100%;
+        height: auto;
     }
 
     h1,
     h2,
     h3 {
-        line-height: 1.25;
         margin: 1.6em 0 0.6em;
+        line-height: 1.25;
     }
 
     h1 {
@@ -115,40 +108,40 @@
     }
 
     blockquote {
-        border-left: 2px solid var(--dl-accent);
-        color: var(--dl-muted);
-        margin: 1em 0;
         padding-left: 12px;
+        margin: 1em 0;
+        color: var(--dl-muted);
+        border-left: 2px solid var(--dl-accent);
     }
 
     pre {
+        padding: 10px;
+        overflow-x: auto;
         background: var(--dl-code-bg);
         border: 1px solid var(--dl-border);
-        overflow-x: auto;
-        padding: 10px;
 
         code {
-            background: none;
             padding: 0;
+            background: none;
         }
     }
 
     code {
-        background: var(--dl-code-bg);
+        padding: 1px 3px;
         font-family: var(--font-mono, ui-monospace, monospace);
         font-size: 0.9em;
-        padding: 1px 3px;
+        background: var(--dl-code-bg);
     }
 
     table {
-        border-collapse: collapse;
         width: 100%;
+        border-collapse: collapse;
     }
 
     th,
     td {
-        border: 1px solid var(--dl-border);
         padding: 4px 8px;
         text-align: left;
+        border: 1px solid var(--dl-border);
     }
 }

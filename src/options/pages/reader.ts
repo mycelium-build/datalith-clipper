@@ -38,7 +38,7 @@ export function renderReader(ctx: PageContext): HTMLElement {
     const reader = ctx.state.settings.reader
     const update = (apply: () => void) => {
         apply()
-        ctx.save()
+        void ctx.save()
         applyPreview()
     }
 

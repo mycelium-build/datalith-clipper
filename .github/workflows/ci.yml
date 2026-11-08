@@ -131,9 +131,6 @@ jobs:
                   DATALITH_READ_TOKEN: ${{ steps.app-token.outputs.token }}
               run: npm run sync-assets
 
-            - name: Lint
-              run: npm run lint
-
             - name: Check license notices
               if: needs.changes.outputs.licenses != 'false'
               run: npm run licenses:check
@@ -141,8 +138,8 @@ jobs:
             - name: Build
               run: npm run build
 
-            - name: Typecheck
-              run: npm run typecheck
+            - name: Check formatting, lint and types
+              run: npm run check
 
             - name: Run tests
               run: npm test

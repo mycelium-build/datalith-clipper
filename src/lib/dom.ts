@@ -28,7 +28,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(
     }
     if (attributes.events) {
         for (const [type, handler] of Object.entries(attributes.events)) {
-            element.addEventListener(type, handler as EventListener)
+            element.addEventListener(type, handler)
         }
     }
     for (const child of children) {

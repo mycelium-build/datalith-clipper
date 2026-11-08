@@ -60,11 +60,11 @@ browser.action.onClicked.addListener((tab) => {
 
 browser.commands.onCommand.addListener((command) => {
     if (command === "toggle-highlighter") {
-        sendToActiveTab({ type: "toggle-highlighter" })
+        void sendToActiveTab({ type: "toggle-highlighter" })
     } else if (command === "open-clipper") {
-        sendToActiveTab({ type: "toggle-panel" })
+        void sendToActiveTab({ type: "toggle-panel" })
     } else if (command === "toggle-reader") {
-        sendToActiveTab({ type: "toggle-reader" })
+        void sendToActiveTab({ type: "toggle-reader" })
     }
 })
 
@@ -72,7 +72,7 @@ browser.runtime.onMessage.addListener((message: unknown) => {
     if (typeof message !== "object" || message === null) return undefined
     const type = (message as Record<string, unknown>).type
     if (type === "open-settings") {
-        browser.runtime.openOptionsPage()
+        void browser.runtime.openOptionsPage()
         return undefined
     }
     if (type === "get-vaults") {

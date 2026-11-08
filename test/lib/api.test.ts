@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vite-plus/test"
 
 import { ClipperApi } from "../../src/lib/api"
 
@@ -74,8 +74,9 @@ describe("ClipperApi", () => {
     })
 
     it("reports unreachable servers", async () => {
-        const api = new ClipperApi("http://127.0.0.1:42908", "", (() =>
-            Promise.reject(new TypeError("Failed to fetch"))) as unknown as typeof fetch)
+        const api = new ClipperApi("http://127.0.0.1:42908", "", () =>
+            Promise.reject(new TypeError("Failed to fetch")),
+        )
         const result = await api.ping()
         expect(result).toEqual({
             ok: false,
@@ -88,10 +89,10 @@ describe("ClipperApi", () => {
         const api = new ClipperApi(
             "http://127.0.0.1:42908",
             "",
-            (async () =>
+            async () =>
                 new Response("<html>gateway splash</html>", {
                     status: 200,
-                })) as unknown as typeof fetch,
+                }),
         )
         const result = await api.ping()
         expect(result).toEqual({

@@ -7,5 +7,5 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-npx --no-install oxfmt --write -- "$@"
+npx --no-install vp fmt --write -- "$@"
 git add -- "$@"

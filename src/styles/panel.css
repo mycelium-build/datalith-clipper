@@ -2,31 +2,23 @@
     all: initial;
     position: fixed;
     inset: 0 0 0 auto;
-    width: 420px;
     z-index: 2147483647;
+    width: 420px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color-scheme: light dark;
 
     --radius-sm: 4px;
     --radius-md: 6px;
-
-    font-family:
-        system-ui,
-        -apple-system,
-        "Segoe UI",
-        Roboto,
-        "Helvetica Neue",
-        Arial,
-        sans-serif;
 }
 
 .panel-root {
-    background: var(--dl-bg);
-    border-left: 1px solid var(--dl-border);
-    box-shadow: -4px 0 16px rgb(0 0 0 / 25%);
-    color: var(--dl-fg);
     display: flex;
     flex-direction: column;
     height: 100%;
+    color: var(--dl-fg);
+    background: var(--dl-bg);
+    border-left: 1px solid var(--dl-border);
+    box-shadow: -4px 0 16px rgb(0 0 0 / 25%);
 
     &.is-minimized {
         background: transparent;
@@ -44,14 +36,14 @@
 }
 
 .pill {
+    display: none;
+    gap: 2px;
     align-items: center;
+    padding: 3px;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
     box-shadow: -2px 2px 8px rgb(0 0 0 / 20%);
-    display: none;
-    gap: 2px;
-    padding: 3px;
 }
 
 .panel-body {
@@ -62,23 +54,23 @@
 }
 
 .toolbar {
-    align-items: center;
-    background: var(--dl-surface);
-    border-bottom: 1px solid var(--dl-border);
     display: flex;
     gap: 2px;
+    align-items: center;
     padding: 4px;
+    background: var(--dl-surface);
+    border-bottom: 1px solid var(--dl-border);
 }
 
 .template-select {
+    flex: 1;
+    min-width: 0;
+    padding: 3px 4px;
+    font-size: 12px;
+    color: var(--dl-fg);
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
-    color: var(--dl-fg);
-    flex: 1;
-    font-size: 12px;
-    min-width: 0;
-    padding: 3px 4px;
 }
 
 .spacer {
@@ -87,17 +79,17 @@
 }
 
 .icon-button {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    color: var(--dl-fg);
+    cursor: pointer;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
-    color: var(--dl-fg);
-    cursor: pointer;
-    display: inline-flex;
-    height: 24px;
-    justify-content: center;
-    padding: 0;
-    width: 24px;
 
     &:hover {
         background: var(--dl-surface-alt);
@@ -108,38 +100,38 @@
     }
 
     &.is-active {
+        color: var(--dl-accent-fg);
         background: var(--dl-accent);
         border-color: var(--dl-accent);
-        color: var(--dl-accent-fg);
     }
 
     svg {
-        height: 1em;
         width: 1em;
+        height: 1em;
     }
 }
 
 .icon {
-    align-items: center;
     display: inline-flex;
+    align-items: center;
     line-height: 0;
 
     svg {
-        height: 1em;
         width: 1em;
+        height: 1em;
     }
 }
 
 .title-input {
-    background: var(--dl-bg);
-    border: none;
-    border-bottom: 1px solid var(--dl-border);
-    color: var(--dl-fg);
     flex: none;
+    padding: 8px;
     font-family: var(--font-pixel, "Pixeloid Sans", monospace);
     font-size: 14px;
     font-weight: 700;
-    padding: 8px;
+    color: var(--dl-fg);
+    background: var(--dl-bg);
+    border: none;
+    border-bottom: 1px solid var(--dl-border);
 
     &:focus {
         outline: 1px solid var(--dl-accent);
@@ -147,11 +139,11 @@
 }
 
 .properties {
-    border-bottom: 1px solid var(--dl-border);
     flex: none;
     max-height: 40%;
-    overflow-y: auto;
     padding: 4px 8px 8px;
+    overflow-y: auto;
+    border-bottom: 1px solid var(--dl-border);
 
     &.is-collapsed .properties-toggle .chevron {
         transform: rotate(-90deg);
@@ -163,17 +155,17 @@
 }
 
 .properties-toggle {
+    display: flex;
+    gap: 4px;
     align-items: center;
+    padding: 2px 0;
+    font-size: 11px;
+    color: var(--dl-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
     background: none;
     border: none;
-    color: var(--dl-muted);
-    cursor: pointer;
-    display: flex;
-    font-size: 11px;
-    gap: 4px;
-    letter-spacing: 0.06em;
-    padding: 2px 0;
-    text-transform: uppercase;
 
     &:hover {
         color: var(--dl-fg);
@@ -192,21 +184,21 @@
 }
 
 .property-row {
-    align-items: center;
     display: flex;
     gap: 4px;
+    align-items: center;
 
     &:focus-within .property-delete {
         display: inline-flex;
     }
 
     input {
+        padding: 3px 4px;
+        font-size: 12px;
+        color: var(--dl-fg);
         background: var(--dl-surface);
         border: 1px solid var(--dl-border);
         border-radius: var(--radius-sm);
-        color: var(--dl-fg);
-        font-size: 12px;
-        padding: 3px 4px;
 
         &:focus {
             outline: 1px solid var(--dl-accent);
@@ -215,8 +207,8 @@
 }
 
 .property-name {
-    color: var(--dl-muted);
     flex: 0 0 32%;
+    color: var(--dl-muted);
 }
 
 .property-value {
@@ -225,14 +217,14 @@
 }
 
 .property-delete {
-    border: none;
-    background: none;
-    color: var(--dl-muted);
-    cursor: pointer;
     display: none;
+    width: 22px;
     height: 22px;
     padding: 0;
-    width: 22px;
+    color: var(--dl-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
 
     &:hover {
         color: var(--dl-red);
@@ -240,15 +232,15 @@
 }
 
 .add-property {
-    background: none;
-    border: none;
+    display: inline-flex;
+    gap: 4px;
+    padding: 2px 0;
+    margin-top: 4px;
+    font-size: 11px;
     color: var(--dl-muted);
     cursor: pointer;
-    display: inline-flex;
-    font-size: 11px;
-    gap: 4px;
-    margin-top: 4px;
-    padding: 2px 0;
+    background: none;
+    border: none;
 
     &:hover {
         color: var(--dl-fg);
@@ -256,48 +248,48 @@
 }
 
 .content-area {
-    border-bottom: 1px solid var(--dl-border);
     display: flex;
     flex: 1;
     flex-direction: column;
     min-height: 0;
+    border-bottom: 1px solid var(--dl-border);
 }
 
 .content-header {
-    align-items: center;
     display: flex;
     gap: 2px;
+    align-items: center;
     padding: 4px 8px 0;
 }
 
 .content-tab {
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--dl-muted);
+    cursor: pointer;
     background: none;
     border: 1px solid transparent;
     border-bottom: none;
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    color: var(--dl-muted);
-    cursor: pointer;
-    font-size: 11px;
-    padding: 2px 8px;
 
     &.is-active {
+        color: var(--dl-fg);
         background: var(--dl-surface);
         border-color: var(--dl-border);
-        color: var(--dl-fg);
     }
 }
 
 .content-input {
-    background: var(--dl-bg);
-    border: none;
-    color: var(--dl-fg);
     flex: 1;
+    width: 100%;
+    padding: 8px;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 12px;
     line-height: 1.5;
-    padding: 8px;
+    color: var(--dl-fg);
     resize: none;
-    width: 100%;
+    background: var(--dl-bg);
+    border: none;
 
     &:focus {
         outline: none;
@@ -305,34 +297,34 @@
 }
 
 .content-preview {
-    background: var(--dl-surface);
     flex: 1;
+    padding: 8px;
+    overflow-y: auto;
     font-size: 13px;
     line-height: 1.6;
-    overflow-y: auto;
-    padding: 8px;
+    background: var(--dl-surface);
 
     img {
-        border-radius: var(--radius-sm);
         max-width: 100%;
+        border-radius: var(--radius-sm);
     }
 
     .wikilink-embed {
+        display: inline-block;
+        padding: 0 4px;
+        font-family: var(--font-mono, ui-monospace, monospace);
+        font-size: 0.85em;
+        color: var(--dl-muted);
         background: var(--dl-surface-alt);
         border: 1px solid var(--dl-border);
         border-radius: var(--radius-sm);
-        color: var(--dl-muted);
-        display: inline-block;
-        font-family: var(--font-mono, ui-monospace, monospace);
-        font-size: 0.85em;
-        padding: 0 4px;
     }
 
     pre {
+        padding: 6px;
+        overflow-x: auto;
         background: var(--dl-code-bg);
         border: 1px solid var(--dl-border);
-        overflow-x: auto;
-        padding: 6px;
     }
 
     a {
@@ -340,20 +332,20 @@
     }
 
     blockquote {
-        border-left: 2px solid var(--dl-accent);
-        color: var(--dl-muted);
-        margin: 4px 0;
         padding-left: 8px;
+        margin: 4px 0;
+        color: var(--dl-muted);
+        border-left: 2px solid var(--dl-accent);
     }
 }
 
 .footer {
-    background: var(--dl-surface);
     display: flex;
     flex: none;
     flex-direction: column;
     gap: 6px;
     padding: 8px;
+    background: var(--dl-surface);
 }
 
 .footer-row {
@@ -363,13 +355,13 @@
 
 .vault-select,
 .folder-input {
+    min-width: 0;
+    padding: 4px;
+    font-size: 12px;
+    color: var(--dl-fg);
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
-    color: var(--dl-fg);
-    font-size: 12px;
-    min-width: 0;
-    padding: 4px;
 }
 
 .vault-select {
@@ -381,15 +373,15 @@
 }
 
 .save-button {
-    background: var(--dl-accent);
-    border: 1px solid var(--dl-accent);
-    border-radius: var(--radius-sm);
-    color: var(--dl-accent-fg);
-    cursor: pointer;
+    padding: 6px;
     font-family: var(--font-pixel, "Pixeloid Sans", monospace);
     font-size: 13px;
     font-weight: 700;
-    padding: 6px;
+    color: var(--dl-accent-fg);
+    cursor: pointer;
+    background: var(--dl-accent);
+    border: 1px solid var(--dl-accent);
+    border-radius: var(--radius-sm);
 
     &:hover:not(:disabled) {
         filter: brightness(1.1);
@@ -406,9 +398,9 @@
 }
 
 .status-line {
-    font-size: 11px;
     min-height: 14px;
     padding: 0 8px 6px;
+    font-size: 11px;
 
     &.is-error {
         color: var(--dl-red);
@@ -424,10 +416,10 @@
 }
 
 .variables-modal {
-    background: rgb(0 0 0 / 40%);
-    display: none;
-    inset: 0;
     position: absolute;
+    inset: 0;
+    display: none;
+    background: rgb(0 0 0 / 40%);
 
     &.is-open {
         display: block;
@@ -435,52 +427,52 @@
 }
 
 .variables-panel {
+    position: absolute;
+    inset: 16px;
+    display: flex;
+    flex-direction: column;
+    max-width: calc(100% - 32px);
+    max-height: calc(100% - 32px);
+    overflow: hidden;
     background: var(--dl-bg);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-md);
     box-shadow: 0 4px 16px rgb(0 0 0 / 30%);
-    display: flex;
-    flex-direction: column;
-    inset: 16px;
-    max-height: calc(100% - 32px);
-    max-width: calc(100% - 32px);
-    overflow: hidden;
-    position: absolute;
 }
 
 .variables-header {
-    align-items: center;
-    background: var(--dl-surface);
-    border-bottom: 1px solid var(--dl-border);
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
     font-family: var(--font-pixel, "Pixeloid Sans", monospace);
     font-size: 12px;
     font-weight: 700;
-    justify-content: space-between;
-    padding: 4px 8px;
+    background: var(--dl-surface);
+    border-bottom: 1px solid var(--dl-border);
 }
 
 .variables-table {
-    border-collapse: collapse;
-    font-size: 12px;
-    overflow-y: auto;
     width: 100%;
+    overflow-y: auto;
+    font-size: 12px;
+    border-collapse: collapse;
 
     th,
     td {
-        border-bottom: 1px solid var(--dl-border);
         padding: 4px 8px;
-        text-align: left;
         vertical-align: top;
+        text-align: left;
+        border-bottom: 1px solid var(--dl-border);
     }
 
     th {
-        background: var(--dl-surface-alt);
-        color: var(--dl-muted);
-        font-weight: 400;
-        text-transform: uppercase;
         font-size: 10px;
+        font-weight: 400;
+        color: var(--dl-muted);
+        text-transform: uppercase;
         letter-spacing: 0.08em;
+        background: var(--dl-surface-alt);
     }
 
     td:first-child {
@@ -490,20 +482,20 @@
 }
 
 .variables-value {
-    font-family: var(--font-mono, ui-monospace, monospace);
     max-height: 120px;
     overflow-y: auto;
-    white-space: pre-wrap;
+    font-family: var(--font-mono, ui-monospace, monospace);
     word-break: break-all;
+    white-space: pre-wrap;
 }
 
 .loading {
-    align-items: center;
-    color: var(--dl-muted);
     display: none;
+    align-items: center;
+    justify-content: center;
     font-family: var(--font-pixel, "Pixeloid Sans", monospace);
     font-size: 12px;
-    justify-content: center;
+    color: var(--dl-muted);
 }
 
 .panel-root.is-loading .panel-body {

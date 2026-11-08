@@ -13,7 +13,7 @@ permissions:
     contents: read
 
 concurrency:
-    group: prepare-release
+    group: prepare-release-${{ github.event_name }}
     cancel-in-progress: false
 
 jobs:
@@ -76,7 +76,6 @@ jobs:
               shell: bash
 
             - name: Verify release PR contains triggering commit
-              id: release-pr
               if: steps.release-please.outputs.prs_created == 'true'
               uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
               env:
@@ -131,32 +130,3 @@ jobs:
                           `(comparison: ${comparison.data.status})`
                         )
                       }
-
-                      core.setOutput('branch', pull.head.ref)
-
-            - name: Check out release PR
-              if: steps.release-please.outputs.prs_created == 'true'
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  ref: ${{ steps.release-pr.outputs.branch }}
-                  token: ${{ steps.app-token.outputs.token }}
-
-            - name: Set up Node.js
-              if: steps.release-please.outputs.prs_created == 'true'
-              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-              with:
-                  node-version: 24
-                  cache: npm
-
-            - name: Format generated release files
-              if: steps.release-please.outputs.prs_created == 'true'
-              run: |
-                  npm ci --ignore-scripts
-                  npx --no-install vp fmt .release-please-manifest.json CHANGELOG.md package.json package-lock.json src/manifest.json
-                  git add .release-please-manifest.json CHANGELOG.md package.json package-lock.json src/manifest.json
-                  if ! git diff --cached --quiet; then
-                      git config user.name "datalith-bot[bot]"
-                      git config user.email "datalith-bot[bot]@users.noreply.github.com"
-                      git commit -m "chore: format generated release files"
-                      git push
-                  fi

@@ -14,7 +14,7 @@ export default defineConfig({
         trailingComma: "all",
         arrowParens: "always",
         sortPackageJson: false,
-        ignorePatterns: ["THIRD-PARTY-NOTICES.md"],
+        ignorePatterns: ["THIRD-PARTY-NOTICES.md", "CHANGELOG.md", ".release-please-manifest.json"],
         sortImports: {
             newlinesBetween: true,
         },

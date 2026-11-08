@@ -19,6 +19,7 @@ env:
     # tracking `main` makes a CI result depend on a repository this commit does not contain.
     DATALITH_SOURCE_REF: v1.1.0
 
+# Only an explicit 'false' or 'true' output may skip a job: an empty output (a failed job) must run everything.
 jobs:
     # On main, skip everything when the pull request that was just merged already verified this tree.
     reuse:
@@ -100,7 +101,7 @@ jobs:
     quality:
         needs: [reuse, changes]
         # Skipped at job level when the tree is verified or nothing tested changed: a skipped required check passes.
-        if: ${{ !cancelled() && needs.reuse.outputs.verified != 'true' && needs.changes.outputs.code == 'true' }}
+        if: ${{ !cancelled() && needs.reuse.outputs.verified != 'true' && needs.changes.outputs.code != 'false' }}
         runs-on: ubuntu-latest
         steps:
             - name: Check out repository
@@ -134,7 +135,7 @@ jobs:
               run: npm run lint
 
             - name: Check license notices
-              if: needs.changes.outputs.licenses == 'true'
+              if: needs.changes.outputs.licenses != 'false'
               run: npm run licenses:check
 
             - name: Build

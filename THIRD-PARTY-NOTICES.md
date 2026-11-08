@@ -775,7 +775,7 @@ edit it by hand.
 
 Used by:
 
-- `dompurify` 3.4.14
+- `dompurify` 3.4.17
 
 ```
 Apache License

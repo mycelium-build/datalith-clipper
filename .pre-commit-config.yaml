@@ -8,20 +8,20 @@ default_stages: [pre-commit]
 repos:
     - repo: local
       hooks:
-          # Formats the committed files with oxfmt and stages the result.
-          - id: oxfmt
-            name: oxfmt
+          # Formats the committed files with Vite+ and stages the result.
+          - id: format
+            name: vp fmt
             language: system
-            entry: scripts/hooks/oxfmt.sh
+            entry: scripts/hooks/format.sh
             # One process: parallel batches would race on git add (.git/index.lock).
             require_serial: true
             types_or: [ts, tsx, javascript, json, css, markdown, yaml]
-            exclude: ^(package-lock\.json|THIRD-PARTY-NOTICES\.md)$
+            exclude: ^THIRD-PARTY-NOTICES\.md$
 
-          - id: oxlint
-            name: oxlint
+          - id: lint
+            name: vp lint
             language: system
-            entry: npx --no-install oxlint
+            entry: npx --no-install vp lint
             types_or: [ts, tsx, javascript]
 
           - id: stylelint
@@ -38,19 +38,19 @@ repos:
             files: ^(package\.json|package-lock\.json|THIRD-PARTY-NOTICES\.md|LICENSE|scripts/licenses/)
             pass_filenames: false
 
-          # Same commands as CI's "Typecheck" and "Run tests" steps, on push only.
-          - id: typecheck
-            name: tsc --noEmit
+          # Same quality checks as CI, on push only.
+          - id: check
+            name: npm run check
             language: system
-            entry: npm run --silent typecheck
-            files: \.(ts|tsx|json)$
+            entry: npm run --silent check
+            files: ^(src/|scripts/|test/|package(-lock)?\.json$|vite\.config\.ts$|tsconfig\.json$)
             pass_filenames: false
             stages: [pre-push]
 
-          - id: vitest
-            name: vitest run
+          - id: test
+            name: vp test
             language: system
             entry: npm test --silent
-            files: ^(src|test|scripts)/|^package(-lock)?\.json$
+            files: ^(src/|test/|scripts/|package(-lock)?\.json$|vite\.config\.ts$)
             pass_filenames: false
             stages: [pre-push]

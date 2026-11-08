@@ -4,34 +4,34 @@
 }
 
 .sidebar {
-    background: var(--dl-surface);
-    border-right: 1px solid var(--dl-border);
-    display: flex;
-    flex-direction: column;
-    flex: none;
-    gap: var(--space-6);
-    min-height: 100vh;
-    overflow-y: auto;
-    padding: var(--space-6) var(--space-4) var(--space-6) 1.5rem;
     position: sticky;
     top: 0;
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: var(--space-6);
     width: 16rem;
+    min-height: 100vh;
+    padding: var(--space-6) var(--space-4) var(--space-6) 1.5rem;
+    overflow-y: auto;
+    background: var(--dl-surface);
+    border-right: 1px solid var(--dl-border);
 }
 
 .brand {
-    align-items: center;
     display: flex;
     gap: var(--space-2);
+    align-items: center;
 }
 
 .brand-mark {
-    color: var(--dl-logo-1);
     display: inline-flex;
     line-height: 0;
+    color: var(--dl-logo-1);
 
     svg {
-        height: 1.5rem;
         width: 1.5rem;
+        height: 1.5rem;
     }
 }
 
@@ -40,17 +40,17 @@
 }
 
 .nav-item {
-    align-items: center;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
     box-sizing: border-box;
-    color: var(--dl-fg);
     display: flex;
-    font-size: 0.875rem;
     gap: var(--space-2);
+    align-items: center;
     height: 2.25rem;
     padding: 0 var(--space-3);
+    font-size: 0.875rem;
+    color: var(--dl-fg);
     text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
 
     &:hover {
         background: var(--dl-surface-alt);
@@ -66,10 +66,10 @@
     }
 
     .nav-item-actions {
-        display: none;
         position: absolute;
-        right: var(--space-2);
         top: 50%;
+        right: var(--space-2);
+        display: none;
         transform: translateY(-50%);
     }
 
@@ -89,8 +89,8 @@
 
     .drag-handle {
         position: absolute;
-        left: -1.25rem;
         top: 50%;
+        left: -1.25rem;
         transform: translateY(-50%);
     }
 }
@@ -108,13 +108,13 @@
 }
 
 .nav-add {
-    background: none;
-    border-style: dashed;
-    color: var(--dl-fg);
-    cursor: pointer;
     font-family: inherit;
     font-size: 0.875rem;
+    color: var(--dl-fg);
     text-align: left;
+    cursor: pointer;
+    background: none;
+    border-style: dashed;
 
     &:hover {
         background: transparent;
@@ -123,11 +123,11 @@
 }
 
 .nav-section {
-    color: var(--dl-muted);
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
     margin: var(--space-6) 0 var(--space-2);
+    font-size: 0.75rem;
+    color: var(--dl-muted);
     text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .content {
@@ -136,8 +136,8 @@
     padding: var(--space-8) var(--space-8) var(--space-8) var(--space-6);
 
     h2 {
-        font-size: 1.125rem;
         margin-bottom: var(--space-4);
+        font-size: 1.125rem;
     }
 }
 
@@ -146,15 +146,15 @@
 }
 
 .page-section {
-    border-bottom: 1px solid var(--dl-border);
-    margin-bottom: var(--space-8);
     padding-bottom: var(--space-6);
+    margin-bottom: var(--space-8);
+    border-bottom: 1px solid var(--dl-border);
 }
 
 .field-row {
-    align-items: center;
     display: flex;
     gap: var(--space-3);
+    align-items: center;
     margin-bottom: var(--space-3);
 }
 
@@ -167,21 +167,21 @@
 }
 
 .field-label {
-    color: var(--dl-muted);
     font-size: 0.875rem;
+    color: var(--dl-muted);
 }
 
 .field-description {
-    color: var(--dl-muted);
     font-size: 0.75rem;
+    color: var(--dl-muted);
 }
 
 .field-error {
-    color: var(--dl-red);
     display: none;
     font-size: 0.75rem;
-    white-space: pre-wrap;
+    color: var(--dl-red);
     overflow-wrap: anywhere;
+    white-space: pre-wrap;
 
     &.is-visible {
         display: block;
@@ -193,16 +193,16 @@
 }
 
 .text-input {
+    flex: 0 0 auto;
+    width: 16rem;
+    min-width: 0;
+    padding: var(--space-2) var(--space-3);
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--dl-fg);
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
-    color: var(--dl-fg);
-    flex: 0 0 auto;
-    font-family: inherit;
-    font-size: 0.875rem;
-    min-width: 0;
-    padding: var(--space-2) var(--space-3);
-    width: 16rem;
 
     &:focus {
         outline: 1px solid var(--dl-accent);
@@ -210,16 +210,16 @@
 }
 
 textarea.text-input {
+    width: 100%;
     font-family: var(--font-mono);
     font-size: 0.8rem;
     line-height: 1.5;
     resize: vertical;
-    width: 100%;
 }
 
 .field-row:has(> textarea.text-input) {
-    align-items: stretch;
     flex-direction: column;
+    align-items: stretch;
 
     .field-text {
         flex-basis: auto;
@@ -227,38 +227,38 @@ textarea.text-input {
 }
 
 .toggle-input {
-    accent-color: var(--dl-accent);
-    height: 1rem;
     width: 1rem;
+    height: 1rem;
+    accent-color: var(--dl-accent);
 }
 
 input[type="range"] {
-    accent-color: var(--dl-accent);
     width: 14rem;
+    accent-color: var(--dl-accent);
 }
 
 .slider-row {
-    align-items: center;
     display: inline-flex;
     gap: var(--space-3);
+    align-items: center;
 }
 
 .slider-value {
-    color: var(--dl-muted);
+    min-width: 3rem;
     font-family: var(--font-mono);
     font-size: 0.8rem;
-    min-width: 3rem;
+    color: var(--dl-muted);
 }
 
 .action-button {
+    padding: var(--space-2) var(--space-4);
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    color: var(--dl-fg);
+    cursor: pointer;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
-    color: var(--dl-fg);
-    cursor: pointer;
-    font-family: var(--font-pixel);
-    font-size: 0.75rem;
-    padding: var(--space-2) var(--space-4);
 
     &:hover {
         background: var(--dl-surface-alt);
@@ -269,9 +269,9 @@ input[type="range"] {
     }
 
     &.is-primary {
+        color: var(--dl-accent-fg);
         background: var(--dl-accent);
         border-color: var(--dl-accent);
-        color: var(--dl-accent-fg);
     }
 
     &.is-danger {
@@ -280,17 +280,17 @@ input[type="range"] {
 }
 
 .icon-button {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    color: var(--dl-fg);
+    cursor: pointer;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
-    color: var(--dl-fg);
-    cursor: pointer;
-    display: inline-flex;
-    height: 1.5rem;
-    justify-content: center;
-    padding: 0;
-    width: 1.5rem;
 
     &:hover {
         background: var(--dl-surface-alt);
@@ -301,21 +301,21 @@ input[type="range"] {
     }
 
     &.is-selected-model {
-        border-color: var(--dl-green);
         color: var(--dl-green);
+        border-color: var(--dl-green);
     }
 }
 
 .drag-handle {
-    color: var(--dl-muted);
-    cursor: grab;
     display: inline-flex;
     flex: none;
     line-height: 0;
+    color: var(--dl-muted);
+    cursor: grab;
 
     svg {
-        height: 1em;
         width: 1em;
+        height: 1em;
     }
 
     &:active {
@@ -328,13 +328,13 @@ input[type="range"] {
 }
 
 .icon {
-    align-items: center;
     display: inline-flex;
+    align-items: center;
     line-height: 0;
 
     svg {
-        height: 1em;
         width: 1em;
+        height: 1em;
     }
 }
 
@@ -344,39 +344,39 @@ input[type="range"] {
 }
 
 .access-control {
-    align-items: flex-end;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+    align-items: flex-end;
 
     .field-description {
         max-width: 18rem;
-        overflow-wrap: anywhere;
         text-align: right;
+        overflow-wrap: anywhere;
     }
 }
 
 .list-card {
-    border: 1px solid var(--dl-border);
-    border-radius: var(--radius-md);
+    width: 100%;
     margin-bottom: var(--space-3);
     margin-left: 1.75rem;
-    width: 100%;
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md);
 }
 
 .list-row {
-    align-items: center;
-    border-bottom: 1px solid var(--dl-border);
+    position: relative;
     display: flex;
     gap: var(--space-2);
+    align-items: center;
     justify-content: flex-start;
     padding: var(--space-2) var(--space-3);
-    position: relative;
+    border-bottom: 1px solid var(--dl-border);
 
     &:last-child {
         border-bottom: none;
-        border-bottom-left-radius: var(--radius-md);
         border-bottom-right-radius: var(--radius-md);
+        border-bottom-left-radius: var(--radius-md);
     }
 
     &:first-child {
@@ -390,8 +390,8 @@ input[type="range"] {
 
     .drag-handle {
         position: absolute;
-        left: -1.75rem;
         top: 50%;
+        left: -1.75rem;
         transform: translateY(-50%);
     }
 
@@ -409,8 +409,8 @@ input[type="range"] {
 }
 
 .list-title {
-    color: var(--dl-fg);
     font-size: 0.875rem;
+    color: var(--dl-fg);
     text-decoration: none;
 }
 
@@ -419,10 +419,10 @@ a.list-title:hover {
 }
 
 .list-subtitle {
-    color: var(--dl-muted);
-    font-size: 0.75rem;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-size: 0.75rem;
+    color: var(--dl-muted);
     white-space: nowrap;
 }
 
@@ -438,19 +438,19 @@ a.list-title:hover {
 }
 
 .empty-note {
-    color: var(--dl-muted);
-    font-size: 0.875rem;
     padding: var(--space-3);
+    font-size: 0.875rem;
+    color: var(--dl-muted);
 }
 
 .advice-note {
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--dl-muted);
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-md);
-    color: var(--dl-muted);
-    font-size: 0.875rem;
-    line-height: 1.5;
-    padding: var(--space-3) var(--space-4);
 }
 
 .section-stack .field-row {
@@ -458,20 +458,20 @@ a.list-title:hover {
 }
 
 .hotkey {
+    padding: 2px var(--space-2);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
     background: var(--dl-surface-alt);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-sm);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    padding: 2px var(--space-2);
 }
 
 .reader-preview {
+    max-height: 18rem;
+    padding: var(--space-6);
+    overflow-y: auto;
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-md);
-    max-height: 18rem;
-    overflow-y: auto;
-    padding: var(--space-6);
 }
 
 .reader-preview-article {
@@ -480,8 +480,8 @@ a.list-title:hover {
     line-height: var(--reader-line-height, 1.6);
 
     h1 {
-        font-size: 1.5em;
         margin: 0 0 0.6em;
+        font-size: 1.5em;
     }
 
     p {
@@ -493,34 +493,34 @@ a.list-title:hover {
     }
 
     blockquote {
-        border-left: 2px solid var(--dl-accent);
-        color: var(--dl-muted);
-        margin: 1em 0;
         padding-left: 12px;
+        margin: 1em 0;
+        color: var(--dl-muted);
+        border-left: 2px solid var(--dl-accent);
     }
 
     pre {
+        padding: var(--space-2);
         background: var(--dl-code-bg);
         border: 1px solid var(--dl-border);
-        padding: var(--space-2);
     }
 }
 
 .popup-dialog {
+    min-width: 24rem;
+    padding: var(--space-6);
+    color: var(--dl-fg);
     background: var(--dl-bg);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-md);
-    color: var(--dl-fg);
-    min-width: 24rem;
-    padding: var(--space-6);
 
     &::backdrop {
         background: rgb(0 0 0 / 40%);
     }
 
     h3 {
-        font-family: var(--font-pixel);
         margin: 0 0 var(--space-4);
+        font-family: var(--font-pixel);
     }
 
     .field-row {
@@ -529,8 +529,8 @@ a.list-title:hover {
     }
 
     .field-text {
-        align-items: center;
         flex-basis: auto;
+        align-items: center;
         text-align: center;
     }
 
@@ -555,32 +555,32 @@ a.list-title:hover {
     }
 
     .editor-grid {
-        align-items: start;
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-6);
+        align-items: start;
     }
 }
 
 .template-reference {
+    position: sticky;
+    top: var(--space-6);
+    flex: none;
+    width: 13rem;
+    max-height: calc(100vh - 8rem);
+    padding: var(--space-3);
+    overflow-y: auto;
     background: var(--dl-surface);
     border: 1px solid var(--dl-border);
     border-radius: var(--radius-md);
-    flex: none;
-    max-height: calc(100vh - 8rem);
-    overflow-y: auto;
-    padding: var(--space-3);
-    position: sticky;
-    top: var(--space-6);
-    width: 13rem;
 }
 
 .reference-title {
-    color: var(--dl-muted);
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
     margin: var(--space-3) 0 var(--space-1);
+    font-size: 0.7rem;
+    color: var(--dl-muted);
     text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .reference-group:first-child .reference-title {
@@ -588,20 +588,20 @@ a.list-title:hover {
 }
 
 .reference-item {
-    background: none;
-    border: none;
-    color: var(--dl-fg);
-    cursor: pointer;
     display: block;
+    width: 100%;
+    padding: 2px var(--space-1);
     font-family: var(--font-mono);
     font-size: 0.7rem;
-    padding: 2px var(--space-1);
+    color: var(--dl-fg);
     text-align: left;
-    width: 100%;
+    cursor: pointer;
+    background: none;
+    border: none;
 
     &:hover {
-        background: var(--dl-surface-alt);
         color: var(--dl-accent);
+        background: var(--dl-surface-alt);
     }
 }
 
@@ -618,10 +618,10 @@ a.list-title:hover {
 }
 
 .property-edit-row {
-    align-items: center;
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
+    align-items: center;
 
     .text-input {
         flex: 1 1 12rem;

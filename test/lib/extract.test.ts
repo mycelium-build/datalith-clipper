@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url"
 
 import { Defuddle } from "defuddle/node"
 import { parseHTML } from "linkedom"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "vite-plus/test"
 
 import { buildContext } from "../../src/lib/extract"
 
@@ -19,7 +19,7 @@ async function parseFixture(): Promise<{ document: Document; html: string }> {
     )
     const html = await readFile(file, "utf8")
     const { document } = parseHTML(html)
-    return { document: document as unknown as Document, html }
+    return { document: document, html }
 }
 
 describe("buildContext", () => {
@@ -59,7 +59,7 @@ describe("buildContext", () => {
 
     it("survives an invalid base URL", () => {
         const { document } = parseHTML("<html lang='fr'><body></body></html>")
-        const context = buildContext(document as unknown as Document, "not a url", {
+        const context = buildContext(document, "not a url", {
             title: "T",
         })
         expect(context.domain).toBe("example.invalid")

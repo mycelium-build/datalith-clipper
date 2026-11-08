@@ -101,7 +101,7 @@ function renderLicense(license: ILicense): string[] {
     return lines
 }
 
-async function renderNpmDependencies(): Promise<string> {
+export async function renderNpmDependencies(): Promise<string> {
     const licenses = await getProjectLicenses(path.join(siteRoot, "package.json"), {
         replace: { dompurify: "./node_modules/dompurify/LICENSE" },
     })

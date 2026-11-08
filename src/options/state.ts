@@ -15,9 +15,7 @@ export interface PageContext {
 
 export function importSettings(json: unknown): ClipperSettings {
     const raw =
-        json !== null && typeof json === "object" && "settings" in json
-            ? (json as { settings: unknown }).settings
-            : json
+        json !== null && typeof json === "object" && "settings" in json ? json.settings : json
     return mergeDefaults(raw as Partial<ClipperSettings>)
 }
 

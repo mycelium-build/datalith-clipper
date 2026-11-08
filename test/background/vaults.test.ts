@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vite-plus/test"
 
 import { resolveVaults, type VaultsDeps } from "../../src/background/vaults"
 import type { ApiResult, Vault } from "../../src/lib/api"

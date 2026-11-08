@@ -52,7 +52,7 @@ npm run licenses:check
 - Node.js and npm
 - Git
 - [prek](https://prek.j178.dev), to run the Git hooks
-- A checkout of the Datalith repository at `../datalith-app`, or a local source path configured with `DATALITH_SOURCE_DIR`
+- GitHub access to download public assets from the latest stable Datalith release
 
 ### Installation
 
@@ -73,23 +73,22 @@ npm run licenses:check
 
     `prek install` reads `.pre-commit-config.yaml` and installs both hooks once for the clone:
 
-    | Hook       | Runs when                                        | What it does                                                      |
-    | ---------- | ------------------------------------------------ | ----------------------------------------------------------------- |
-    | pre-commit | staged files                                     | `oxfmt` formats them and stages the result; `oxlint`, `stylelint` |
-    | pre-commit | `package*.json`, notices or license files staged | `licenses:check`; stale notices are regenerated and staged        |
-    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`                                   |
+    | Hook       | Runs when                                        | What it does                                                        |
+    | ---------- | ------------------------------------------------ | ------------------------------------------------------------------- |
+    | pre-commit | staged files                                     | `vp fmt` formats them and stages the result; `vp lint`, `stylelint` |
+    | pre-commit | `package*.json`, notices or license files staged | `licenses:check`; stale notices are regenerated and staged          |
+    | pre-push   | the pushed commits touch code or `package*.json` | `npm run check`, `npm test`                                         |
 
     The formatting and notice fixes only touch what you staged: prek sets unstaged changes aside while the hooks run.
     If a fix conflicts with unstaged changes in the same file, prek drops it and stops the commit; format or stage the file yourself and commit again.
     A `licenses:check` failure that regenerating the notices does not explain stops the commit.
     Run every pre-commit hook on the whole tree with `prek run --all-files`.
     Bypass a hook once with `--no-verify`; CI runs the same checks.
-    The pre-push typecheck needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.
+    The pre-push check fetches assets and generates its inputs automatically.
 
 3. Build:
 
     ```bash
-    npm run sync-assets
     npm run build        # bundles to dist/chrome and dist/firefox
     ```
 
@@ -132,6 +131,28 @@ operation; an unreachable app keeps the existing launch-and-retry behavior.
 
 Dependency updates are opened by a self-hosted Renovate run from datalith-app (`renovate.json`); its Dependency Dashboard is an issue of this repository. After an npm update, `scripts/renovate-post-upgrade.sh` regenerates `THIRD-PARTY-NOTICES.md`.
 
+## Asset sources
+
+Every build and watch startup syncs assets from the latest stable Datalith release,
+then regenerates icons, themes and bundled license notices. Development overrides
+can be set in `.env` or on the command line:
+
+```bash
+DATALITH_SOURCE_REF=main npm run build
+DATALITH_SOURCE_REF=v1.1.0 npm run build
+DATALITH_SOURCE_DIR=../datalith-app npm run build
+```
+
+Local directory overrides are refused in CI. Stable tags are cached under `.cache/`;
+branches are refreshed on each build. Restart watch mode to refresh assets.
+Public clones need no token; `GH_TOKEN`, `GITHUB_TOKEN` or `DATALITH_READ_TOKEN`
+can raise the GitHub API rate limit.
+
+`npm run check` fetches current assets, checks their licenses and committed npm
+notices, then generates themes/icons before checking the project. It works without
+a prior build. `npm run licenses:check` also fetches assets when run on its own.
+Each build includes complete notices for the assets it bundles.
+
 ## Our stance on AI
 
 We allow PR made with AI, but you are responsible for your code. This implies that you have reread all your code and reaches a good quality. You should always understand what you have done. If you clearly did not read the code or it is fully vibe coded we allow ourselves to close the PR without reason.
@@ -139,3 +160,9 @@ We allow PR made with AI, but you are responsible for your code. This implies th
 ## License
 
 By contributing to this project, you agree that your contributions will be licensed under the MIT License.
+
+## Toolchain
+
+Vite+ runs formatting, linting and tests through the existing `npm run fmt`, `npm run lint` and `npm test` commands. Their shared configuration is in `vite.config.ts`. Like the site, `npm run check` combines formatting, type-aware linting, type checking and Stylelint. It runs in CI and before pushing. `npm run typecheck` remains available for the standalone TypeScript check. The Chrome/Firefox extension build remains the custom Rolldown script in `scripts/build.ts`.
+
+Keep `vite-plus`, its `vite` alias and the bundled Vitest override aligned; Renovate groups these updates.

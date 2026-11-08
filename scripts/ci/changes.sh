@@ -27,7 +27,7 @@ git rev-parse --verify -q "${base}^{commit}" >/dev/null || unknown "base $base i
 files=$(git diff --name-only "$base" HEAD) || unknown "cannot diff $base with HEAD"
 
 # Exclusion list: files that neither the build, nor the checks, nor the tests read.
-# `oxfmt --check .` also formats the Markdown among them: the separate `format` job still covers it.
+# `vp fmt --check` also formats the Markdown among them: the separate `format` job still covers it.
 # Everything else, including any new path, counts as code.
 is_excluded() {
     case "$1" in
@@ -35,14 +35,13 @@ is_excluded() {
         .github/*) return 0 ;;
         README.md | CHANGELOG.md | CONTRIBUTING.md) return 0 ;;
         docs/*) return 0 ;;
-        .pre-commit-config.yaml | renovate.json | .env.example) return 0 ;;
+        .pre-commit-config.yaml | renovate.json | .env.example | release-please-config.json | .release-please-manifest.json) return 0 ;;
         scripts/hooks/* | scripts/renovate-post-upgrade.sh) return 0 ;;
         *) return 1 ;;
     esac
 }
 
-# Inputs of licenses:check: lockfile, package.json, notices, project license, license scripts and the
-# pinned datalith-app ref (its license files are bundled assets).
+# Inputs of the dependency-only license check. Build validates asset licenses separately.
 is_license_input() {
     case "$1" in
         package.json | package-lock.json | THIRD-PARTY-NOTICES.md | LICENSE) return 0 ;;

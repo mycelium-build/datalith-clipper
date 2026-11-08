@@ -333,6 +333,10 @@ export class Panel {
     private previewPane!: HTMLDivElement
     private vaultSelect!: HTMLSelectElement
     private saveButton!: HTMLButtonElement
+    private connectionBanner!: HTMLDivElement
+    private connectionMessage!: HTMLDivElement
+    private retryButton!: HTMLButtonElement
+    private refreshingVaults = false
     private statusLine!: HTMLDivElement
     private propertiesSection!: HTMLDivElement
     private propertyRows!: HTMLDivElement
@@ -413,6 +417,22 @@ export class Panel {
     private previewTab!: HTMLButtonElement
 
     private buildFooter(body: HTMLDivElement): void {
+        this.connectionMessage = el("div", { attributes: { role: "alert" } })
+        this.retryButton = el("button", {
+            className: "retry-button",
+            text: "Retry",
+            attributes: { type: "button" },
+            events: { click: () => this.settings && this.refreshVaults(this.settings) },
+        })
+        this.connectionBanner = el(
+            "div",
+            {
+                className: "connection-banner",
+                attributes: { hidden: "" },
+            },
+            [this.connectionMessage, this.retryButton],
+        )
+        body.append(this.connectionBanner)
         this.vaultSelect = el("select", {
             className: "vault-select",
             attributes: { "aria-label": "Vault" },
@@ -654,15 +674,36 @@ export class Panel {
     }
 
     private async refreshVaults(settings: ClipperSettings): Promise<void> {
+        if (this.refreshingVaults) return
+        this.refreshingVaults = true
+        this.retryButton.disabled = true
+        this.retryButton.textContent = "Checking…"
+        try {
+            await this.loadVaults(settings)
+        } catch (error) {
+            this.connectionMessage.textContent = errorMessage(error)
+            this.connectionBanner.hidden = false
+            this.vaultSelect.disabled = true
+            this.saveButton.disabled = true
+        } finally {
+            this.refreshingVaults = false
+            this.retryButton.disabled = false
+            this.retryButton.textContent = "Retry"
+        }
+    }
+
+    private async loadVaults(settings: ClipperSettings): Promise<void> {
         const response = (await browser.runtime.sendMessage({
             type: "get-vaults",
         })) as VaultsResponse
         const previous = this.state?.vault ?? settings.lastUsed.vault
         this.vaultSelect.replaceChildren()
         if (!response.ok) {
+            this.connectionMessage.textContent = response.error
+            this.connectionBanner.hidden = false
             this.vaultSelect.append(
                 el("option", {
-                    text: `Unavailable — ${response.error}`,
+                    text: "Vaults unavailable",
                     attributes: { value: "" },
                 }),
             )
@@ -670,6 +711,8 @@ export class Panel {
             this.saveButton.disabled = true
             return
         }
+        this.connectionBanner.hidden = true
+        this.connectionMessage.textContent = ""
         this.vaultSelect.disabled = false
         this.saveButton.disabled = false
         if (response.stale) {

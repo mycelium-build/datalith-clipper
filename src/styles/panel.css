@@ -347,6 +347,35 @@
     }
 }
 
+.connection-banner {
+    background: var(--dl-surface);
+    border: 1px solid var(--dl-red);
+    border-radius: var(--radius-sm);
+    color: var(--dl-fg);
+    flex: none;
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 8px;
+    overflow-wrap: anywhere;
+    padding: 8px;
+}
+
+.retry-button {
+    background: var(--dl-surface-alt);
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
+    color: var(--dl-fg);
+    cursor: pointer;
+    font: inherit;
+    margin-top: 6px;
+    padding: 3px 8px;
+
+    &:disabled {
+        cursor: wait;
+        opacity: 0.5;
+    }
+}
+
 .footer {
     background: var(--dl-surface);
     display: flex;

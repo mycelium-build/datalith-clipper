@@ -11,13 +11,14 @@
         "package": "node scripts/package.ts",
         "typecheck": "tsc --noEmit",
         "licenses:generate": "node scripts/licenses/generate.ts",
-        "licenses:check": "node scripts/licenses/check.ts",
+        "licenses:check": "node --env-file-if-exists=.env scripts/licenses/check.ts",
         "test": "vp test",
         "lint": "vp lint && stylelint \"src/styles/*.css\"",
         "lint:fix": "vp lint --fix && stylelint --fix \"src/styles/*.css\"",
         "fmt": "vp fmt",
         "fmt:check": "vp fmt --check",
-        "check": "vp check && tsc --noEmit && stylelint \"src/styles/*.css\""
+        "check": "vp check && tsc --noEmit && stylelint \"src/styles/*.css\"",
+        "precheck": "npm run licenses:check && npm run build-themes && npm run build-icons"
     },
     "dependencies": {
         "defuddle": "^0.19.3",

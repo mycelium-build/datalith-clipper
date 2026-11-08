@@ -1,14 +1,16 @@
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 
-import { renderNotices, renderNpmDependencies, siteRoot } from "./render.ts"
+import { syncAssets } from "../sync-assets.ts"
+import { renderNotices, siteRoot } from "./render.ts"
 
-const dependenciesOnly = process.argv.includes("--dependencies-only")
-const expected = dependenciesOnly ? await renderNpmDependencies() : await renderNotices()
+await syncAssets()
+// Rendering validates the licenses of the current assets. Only npm notices are
+// compared with the committed file: stable asset releases move independently.
+const expected = await renderNotices()
 const actual = await readFile(path.join(siteRoot, "THIRD-PARTY-NOTICES.md"), "utf-8")
-
-const compared = dependenciesOnly ? actual.slice(actual.indexOf("## npm dependencies\n")) : actual
-if (compared !== expected) {
+const npmSection = (notices: string) => notices.slice(notices.indexOf("## npm dependencies\n"))
+if (npmSection(actual) !== npmSection(expected)) {
     console.error("THIRD-PARTY-NOTICES.md is stale: run npm run licenses:generate")
     process.exit(1)
 }

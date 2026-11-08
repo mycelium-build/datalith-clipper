@@ -111,18 +111,14 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
-            # Assets move with stable releases. Keep the committed npm notices checked;
-            # Build validates asset license files and renders complete notices into each ZIP.
-            - name: Check dependency license notices
-              if: needs.changes.outputs.licenses != 'false'
-              run: npm run licenses:check -- --dependencies-only
-
             - name: Build
               env:
                   GH_TOKEN: ${{ github.token }}
               run: npm run build
 
-            - name: Check formatting, lint and types
+            - name: Check assets, licenses, formatting, lint and types
+              env:
+                  GH_TOKEN: ${{ github.token }}
               run: npm run check
 
             - name: Run tests

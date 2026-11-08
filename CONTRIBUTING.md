@@ -51,6 +51,7 @@ npm run licenses:check
 
 - Node.js and npm
 - Git
+- [prek](https://prek.j178.dev), to run the Git hooks
 - A checkout of the Datalith repository at `../datalith-app`, or a local source path configured with `DATALITH_SOURCE_DIR`
 
 ### Installation
@@ -62,20 +63,42 @@ npm run licenses:check
     cd datalith-clipper
     ```
 
-2. Install dependencies and build:
+2. Install dependencies and enable the Git hooks:
 
     ```bash
     npm ci
+    brew install prek        # or: uv tool install prek, or: cargo install --locked prek
+    prek install
+    ```
+
+    `prek install` reads `.pre-commit-config.yaml` and installs both hooks once for the clone:
+
+    | Hook       | Runs when                                        | What it does                                                      |
+    | ---------- | ------------------------------------------------ | ----------------------------------------------------------------- |
+    | pre-commit | staged files                                     | `oxfmt` formats them and stages the result; `oxlint`, `stylelint` |
+    | pre-commit | `package*.json`, notices or license files staged | `licenses:check`; stale notices are regenerated and staged        |
+    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`                                   |
+
+    The formatting and notice fixes only touch what you staged: prek sets unstaged changes aside while the hooks run.
+    If a fix conflicts with unstaged changes in the same file, prek drops it and stops the commit; format or stage the file yourself and commit again.
+    A `licenses:check` failure that regenerating the notices does not explain stops the commit.
+    Run every pre-commit hook on the whole tree with `prek run --all-files`.
+    Bypass a hook once with `--no-verify`; CI runs the same checks.
+    The pre-push typecheck needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.
+
+3. Build:
+
+    ```bash
     npm run sync-assets
     npm run build        # bundles to dist/chrome and dist/firefox
     ```
 
-3. Load the unpacked extension:
+4. Load the unpacked extension:
 
     - **Chrome**: `chrome://extensions` → Developer mode → Load unpacked → `dist/chrome`
     - **Firefox**: `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → pick any file in `dist/firefox`
 
-4. Rebuild on change while developing:
+5. Rebuild on change while developing:
 
     ```bash
     npm run watch

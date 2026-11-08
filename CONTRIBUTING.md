@@ -120,10 +120,7 @@ npm run licenses:check
     npm run lint
     ```
 
-## Continuous integration
-
-CI bundles the assets of a pinned datalith-app release (`DATALITH_SOURCE_REF` in `.github/workflows/ci.yml`).
-After each stable datalith-app release, the `bump-datalith-source.yml` workflow opens a `chore(ci): use datalith-app vX.Y.Z` pull request; CI tests the new assets before you merge it.
+## Dependency updates
 
 Dependency updates are opened by a self-hosted Renovate run from datalith-app (`renovate.json`); its Dependency Dashboard is an issue of this repository. After an npm update, `scripts/renovate-post-upgrade.sh` regenerates `THIRD-PARTY-NOTICES.md`.
 

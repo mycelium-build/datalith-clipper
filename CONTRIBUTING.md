@@ -52,7 +52,7 @@ npm run licenses:check
 - Node.js and npm
 - Git
 - [prek](https://prek.j178.dev), to run the Git hooks
-- A checkout of the Datalith repository at `../datalith-app`, or a local source path configured with `DATALITH_SOURCE_DIR`
+- GitHub access to download public assets from the latest stable Datalith release
 
 ### Installation
 
@@ -89,7 +89,6 @@ npm run licenses:check
 3. Build:
 
     ```bash
-    npm run sync-assets
     npm run build        # bundles to dist/chrome and dist/firefox
     ```
 
@@ -123,6 +122,53 @@ npm run licenses:check
 ## Dependency updates
 
 Dependency updates are opened by a self-hosted Renovate run from datalith-app (`renovate.json`); its Dependency Dashboard is an issue of this repository. After an npm update, `scripts/renovate-post-upgrade.sh` regenerates `THIRD-PARTY-NOTICES.md`.
+
+## Releases and asset sources
+
+The clipper has its own semantic version, independent of Datalith and its API version.
+The first official release is **0.1.0**. After that, `fix:` commits propose a patch,
+`feat:` a minor, and breaking changes (`!` or `BREAKING CHANGE`) a major release,
+including while the version is below 1.0. `chore:` alone does not propose a release.
+
+After successful CI on `main`, **Prepare release** opens or updates a release PR
+with the next version, lockfile, source manifest and changelog. Review and merge
+that PR to publish: release-please creates a draft and its `vX.Y.Z` tag; **Release**
+builds and tests Chrome and Firefox, uploads their ZIPs, adds the Datalith asset tag
+to the release notes, then publishes the draft. There is no automatic PR merge and
+no store publication. The initial-version setting applies only before the first
+release; no manual configuration cleanup is needed after 0.1.0. The first release
+PR is proposed when release-please sees a feature or fix, including existing history.
+
+Release validation always runs, even when the main CI reused a previously verified
+PR. If upload or publication fails, use **Re-run failed jobs** to reuse the saved
+archives. If the build failed, re-run it; **Release** also accepts a manual existing
+tag while its release remains a draft. Published releases cannot be overwritten.
+Before publishing the first clipper that checks API compatibility, publish the
+Datalith stable release exposing that API version and test the pair together.
+
+Every `npm run build` (and watch startup) refreshes the assets, themes and generated
+icons from the latest published **stable** Datalith release. Preview releases are
+excluded. The source tag is printed during the build and recorded in release notes;
+it does not declare API compatibility. Use explicit overrides for development:
+
+```bash
+DATALITH_SOURCE_REF=main npm run build
+DATALITH_SOURCE_REF=v1.1.0 npm run build
+DATALITH_SOURCE_DIR=../datalith-app npm run build
+```
+
+These variables may also be placed in `.env`. Local directory overrides are refused
+in CI. Mutable refs such as `main` are refreshed at every build; stable-tag clones
+are cached privately under `.cache/` in this checkout. Restart watch mode to refresh
+assets again. No GitHub token is needed for public clones; `GH_TOKEN`, `GITHUB_TOKEN`
+or `DATALITH_READ_TOKEN` can raise the release API rate limit if supplied.
+
+The committed notices remain checked against npm dependencies in CI. Since asset
+license texts can change independently of this repository, each build validates
+those license files and renders complete, current notices into both browser
+bundles. `npm run package` includes `LICENSE` and these notices and rejects a stale
+manifest version. `npm run licenses:check` still performs the full comparison for
+local edits; `--dependencies-only` limits that comparison to the npm section.
 
 ## Our stance on AI
 

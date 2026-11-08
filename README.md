@@ -25,8 +25,8 @@ For more info go to [Datalith's website](https://mycelium-build.github.io/datali
 
 Download the latest zip for your browser from [Releases](https://github.com/mycelium-build/datalith-clipper/releases), unzip it, then load the unpacked extension:
 
-- **Chrome**: `chrome://extensions` → enable Developer mode → **Load unpacked** → select the unzipped `chrome` folder
-- **Firefox**: `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → pick any file inside the unzipped `firefox` folder (Firefox removes temporary add-ons on restart)
+- **Chrome**: `chrome://extensions` → enable Developer mode → **Load unpacked** → select the extracted folder containing `manifest.json`
+- **Firefox**: `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on** → pick `manifest.json` inside the extracted folder (Firefox removes temporary add-ons on restart)
 
 ## Getting started
 

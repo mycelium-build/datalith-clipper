@@ -1,0 +1,114 @@
+name: Release
+
+on:
+    push:
+        tags: ["v*"]
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: Existing stable release tag to rebuild while its release is still a draft
+                required: true
+                type: string
+
+permissions:
+    contents: read
+
+concurrency:
+    group: release-${{ inputs.tag || github.ref_name }}
+    cancel-in-progress: false
+
+env:
+    RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+    build:
+        runs-on: ubuntu-24.04
+        timeout-minutes: 20
+        steps:
+            - name: Validate stable tag
+              run: '[[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]'
+
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  ref: ${{ env.RELEASE_TAG }}
+                  persist-credentials: false
+
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: 24
+                  cache: npm
+
+            - name: Check version and draft release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  node --input-type=module -e 'import fs from "node:fs"; if (`v${JSON.parse(fs.readFileSync("package.json")).version}` !== process.env.RELEASE_TAG) throw new Error("Tag and package version differ")'
+                  # Tag delivery can precede visibility of the draft created by release-please.
+                  found=false
+                  for attempt in {1..12}; do
+                      if draft=$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+                          test "$draft" = true
+                          found=true
+                          break
+                      fi
+                      sleep 5
+                  done
+                  test "$found" = true
+
+            - name: Resolve the latest stable assets once for this build
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  tag=$(gh api repos/mycelium-build/datalith-app/releases/latest --jq 'select(.draft == false and .prerelease == false) | .tag_name')
+                  [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+                  echo "DATALITH_SOURCE_REF=$tag" >> "$GITHUB_ENV"
+
+            - run: npm ci
+            - run: npm run fmt:check
+            - run: npm run lint
+            - run: npm run licenses:check -- --dependencies-only
+            # A release always builds and validates its assets, even if main reused a PR's CI.
+            # Build syncs assets, regenerates icons/themes and includes their license notices.
+            - run: npm run build
+            - run: npm run typecheck
+            - run: npm test
+            - run: npm run package
+
+            - name: Save release archives and asset tag
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: clipper-release
+                  path: |
+                      release/*.zip
+                      dist/assets-tag.txt
+                  if-no-files-found: error
+                  retention-days: 7
+
+    publish:
+        needs: build
+        runs-on: ubuntu-24.04
+        timeout-minutes: 5
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+              with:
+                  name: clipper-release
+
+            - name: Upload archives and publish
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  GH_REPO: ${{ github.repository }}
+              run: |
+                  # Re-running a published release must never replace its existing archives.
+                  test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+                  gh release upload "$RELEASE_TAG" release/*.zip --clobber
+                  gh release view "$RELEASE_TAG" --json body --jq .body > notes.md
+                  node --input-type=module <<'JS'
+                  import fs from 'node:fs'
+                  const tag = fs.readFileSync('dist/assets-tag.txt', 'utf8').trim()
+                  if (!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(tag)) throw new Error('Invalid assets tag')
+                  const body = fs.readFileSync('notes.md', 'utf8').split('\n<!-- datalith-assets -->')[0].trimEnd()
+                  fs.writeFileSync('notes.md', `${body}\n\n<!-- datalith-assets -->\nAssets: [Datalith ${tag}](https://github.com/mycelium-build/datalith-app/releases/tag/${tag}).\n`)
+                  JS
+                  gh release edit "$RELEASE_TAG" --notes-file notes.md --draft=false --latest

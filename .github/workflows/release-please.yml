@@ -1,0 +1,60 @@
+name: Prepare release
+
+on:
+    workflow_run:
+        workflows: [CI]
+        types: [completed]
+        branches: [main]
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: prepare-release
+    cancel-in-progress: false
+
+jobs:
+    prepare:
+        if: >-
+            github.event_name == 'workflow_dispatch' ||
+            (github.event.workflow_run.conclusion == 'success' &&
+            github.event.workflow_run.event == 'push' &&
+            github.event.workflow_run.head_repository.full_name == github.repository)
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Ignore an older CI completion
+              id: eligible
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  GH_REPO: ${{ github.repository }}
+                  EVENT: ${{ github.event_name }}
+                  TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+              run: |
+                  current=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq .object.sha)
+                  if [ "$EVENT" = workflow_dispatch ] || [ "$current" = "$TESTED_SHA" ]; then
+                      echo "run=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "A newer main commit will prepare its release after its own CI."
+                  fi
+
+            # An App token makes the release PR run CI and its tag start Release.
+            - name: Create automation token
+              if: steps.eligible.outputs.run == 'true'
+              id: app-token
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+              with:
+                  client-id: ${{ secrets.AUTOMATION_APP_CLIENT_ID }}
+                  private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
+
+            - name: Prepare release PR or tag its merged version
+              if: steps.eligible.outputs.run == 'true'
+              uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
+              with:
+                  token: ${{ steps.app-token.outputs.token }}
+                  target-branch: main
+                  config-file: release-please-config.json
+                  manifest-file: .release-please-manifest.json

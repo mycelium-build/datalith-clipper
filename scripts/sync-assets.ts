@@ -8,7 +8,6 @@ import sharp from "sharp"
 import { resolveDatalithSource } from "./lib/source.ts"
 
 const siteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
-const { root: sourceRoot } = await resolveDatalithSource()
 
 const copies = [
     { from: path.join("assets", "logo", "datalith.txt"), to: path.join("src", "data", "logo.txt") },
@@ -38,38 +37,47 @@ async function copyTree(sourcePath: string, destinationPath: string): Promise<nu
     return count
 }
 
-let copiedCount = 0
+/** Refresh the bundled assets and report their source for release notes. */
+export async function syncAssets(): Promise<string> {
+    const { root: sourceRoot, ref } = await resolveDatalithSource()
+    let copiedCount = 0
 
-for (const { from, to } of copies) {
-    const sourcePath = path.join(sourceRoot, from)
-    const destinationPath = path.join(siteRoot, to)
-    await rm(destinationPath, { recursive: true, force: true })
-    copiedCount += await copyTree(sourcePath, destinationPath)
+    for (const { from, to } of copies) {
+        const sourcePath = path.join(sourceRoot, from)
+        const destinationPath = path.join(siteRoot, to)
+        await rm(destinationPath, { recursive: true, force: true })
+        copiedCount += await copyTree(sourcePath, destinationPath)
+    }
+
+    const clipperSource = path.join(sourceRoot, "assets", "icons", "clipper.svg")
+    const iconsDestination = path.join(siteRoot, "public", "icons")
+    await mkdir(iconsDestination, { recursive: true })
+    const ACCENT = "#1e8dff"
+    const clipperSvg = (await readFile(clipperSource, "utf8")).replaceAll(
+        'fill="currentColor"',
+        `fill="${ACCENT}"`,
+    )
+    for (const [size, cells, pad] of [
+        [16, 2, 1],
+        [48, 6, 3],
+        [128, 18, 1],
+    ] as const) {
+        const inner = cells * 7
+        await sharp(Buffer.from(clipperSvg))
+            .resize(inner, inner, { kernel: "nearest" })
+            .extend({
+                top: pad,
+                bottom: pad,
+                left: pad,
+                right: pad,
+                background: { r: 0, g: 0, b: 0, alpha: 0 },
+            })
+            .toFile(path.join(iconsDestination, `icon-${size}.png`))
+    }
+    console.log(`Synced ${copiedCount} asset files and extension icons from Datalith ${ref}`)
+    return ref
 }
 
-const clipperSource = path.join(sourceRoot, "assets", "icons", "clipper.svg")
-const iconsDestination = path.join(siteRoot, "public", "icons")
-await mkdir(iconsDestination, { recursive: true })
-const ACCENT = "#1e8dff"
-const clipperSvg = (await readFile(clipperSource, "utf8")).replaceAll(
-    'fill="currentColor"',
-    `fill="${ACCENT}"`,
-)
-for (const [size, cells, pad] of [
-    [16, 2, 1],
-    [48, 6, 3],
-    [128, 18, 1],
-] as const) {
-    const inner = cells * 7
-    await sharp(Buffer.from(clipperSvg))
-        .resize(inner, inner, { kernel: "nearest" })
-        .extend({
-            top: pad,
-            bottom: pad,
-            left: pad,
-            right: pad,
-            background: { r: 0, g: 0, b: 0, alpha: 0 },
-        })
-        .toFile(path.join(iconsDestination, `icon-${size}.png`))
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+    await syncAssets()
 }
-console.log(`Synced ${copiedCount} asset files and the extension icons from ${sourceRoot}`)

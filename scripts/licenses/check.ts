@@ -1,12 +1,14 @@
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 
-import { renderNotices, siteRoot } from "./render.ts"
+import { renderNotices, renderNpmDependencies, siteRoot } from "./render.ts"
 
-const expected = await renderNotices()
+const dependenciesOnly = process.argv.includes("--dependencies-only")
+const expected = dependenciesOnly ? await renderNpmDependencies() : await renderNotices()
 const actual = await readFile(path.join(siteRoot, "THIRD-PARTY-NOTICES.md"), "utf-8")
 
-if (actual !== expected) {
+const compared = dependenciesOnly ? actual.slice(actual.indexOf("## npm dependencies\n")) : actual
+if (compared !== expected) {
     console.error("THIRD-PARTY-NOTICES.md is stale: run npm run licenses:generate")
     process.exit(1)
 }

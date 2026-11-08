@@ -122,8 +122,6 @@ npm run licenses:check
 CI bundles the assets of a pinned datalith-app release (`DATALITH_SOURCE_REF` in `.github/workflows/ci.yml`).
 After each stable datalith-app release, the `bump-datalith-source.yml` workflow opens a `chore(ci): use datalith-app vX.Y.Z` pull request; CI tests the new assets before you merge it.
 
-Dependency updates are opened by a self-hosted Renovate run from datalith-app (`renovate.json`); its Dependency Dashboard is an issue of this repository. After an npm update, `scripts/renovate-post-upgrade.sh` regenerates `THIRD-PARTY-NOTICES.md`.
-
 ## Our stance on AI
 
 We allow PR made with AI, but you are responsible for your code. This implies that you have reread all your code and reaches a good quality. You should always understand what you have done. If you clearly did not read the code or it is fully vibe coded we allow ourselves to close the PR without reason.

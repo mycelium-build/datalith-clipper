@@ -158,7 +158,7 @@ export class Panel {
         this.state = state
         this.populate()
         this.root.classList.remove("is-loading")
-        this.refreshVaults(settings)
+        void this.refreshVaults(settings)
     }
 
     private async switchTemplate(template: Template): Promise<void> {
@@ -654,9 +654,9 @@ export class Panel {
     }
 
     private async refreshVaults(settings: ClipperSettings): Promise<void> {
-        const response = (await browser.runtime.sendMessage({
+        const response: VaultsResponse = await browser.runtime.sendMessage({
             type: "get-vaults",
-        })) as VaultsResponse
+        })
         const previous = this.state?.vault ?? settings.lastUsed.vault
         this.vaultSelect.replaceChildren()
         if (!response.ok) {
@@ -735,10 +735,10 @@ export class Panel {
             this.setStatus(`Template error — ${templateErrorMessage(error)}`, "error")
             return
         }
-        const response = (await browser.runtime.sendMessage({
+        const response: SaveResponse = await browser.runtime.sendMessage({
             type: "save-clip",
             note,
-        })) as SaveResponse
+        })
         this.saveButton.disabled = false
         if (!response.ok) {
             if (response.launched) {

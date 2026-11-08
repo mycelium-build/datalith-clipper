@@ -21,42 +21,25 @@ export default defineConfig({
     },
     lint: {
         plugins: ["typescript", "import"],
-        categories: {
-            correctness: "error",
-            perf: "error",
-            suspicious: "error",
-        },
+        categories: { correctness: "error", perf: "error", suspicious: "error" },
+        jsPlugins: [{ name: "vite-plus", specifier: "vite-plus/oxlint-plugin" }],
         rules: {
+            "vite-plus/prefer-vite-plus-imports": "error",
             eqeqeq: ["error", "smart"],
-            "no-unused-vars": [
-                "error",
-                {
-                    ignoreRestSiblings: true,
-                },
-            ],
+            "no-await-in-loop": "off",
+            "no-unused-vars": ["error", { ignoreRestSiblings: true, argsIgnorePattern: "^_" }],
             "no-var": "error",
             "prefer-const": "error",
             "prefer-template": "error",
+            "promise/prefer-await-to-then": "error",
             "typescript/consistent-type-imports": "error",
             "typescript/consistent-type-exports": "error",
+            "typescript/no-unnecessary-type-parameters": "off",
+            "typescript/no-unsafe-type-assertion": "off",
             "import/no-duplicates": "error",
             "import/no-cycle": "error",
-            "import/no-unassigned-import": [
-                "error",
-                {
-                    allow: ["**/*.css"],
-                },
-            ],
-            "vite-plus/prefer-vite-plus-imports": "error",
+            "import/no-unassigned-import": ["error", { allow: ["**/*.css"] }],
         },
-        options: {
-            denyWarnings: true,
-        },
-        jsPlugins: [
-            {
-                name: "vite-plus",
-                specifier: "vite-plus/oxlint-plugin",
-            },
-        ],
+        options: { typeAware: true, typeCheck: true, denyWarnings: true },
     },
 })

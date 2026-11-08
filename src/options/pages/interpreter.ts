@@ -28,7 +28,7 @@ export function renderInterpreter(ctx: PageContext): HTMLElement {
                 "Enable",
                 toggleInput(interpreter.enabled, (value) => {
                     interpreter.enabled = value
-                    ctx.save()
+                    void ctx.save()
                 }),
                 'Evaluates {{"prompt"}} expressions in templates with the selected model.',
             ),
@@ -36,7 +36,7 @@ export function renderInterpreter(ctx: PageContext): HTMLElement {
                 "Execute when panel opens",
                 toggleInput(interpreter.execOnOpen, (value) => {
                     interpreter.execOnOpen = value
-                    ctx.save()
+                    void ctx.save()
                 }),
                 "Runs prompts as soon as the panel opens instead of when saving.",
             ),
@@ -57,7 +57,7 @@ export function renderInterpreter(ctx: PageContext): HTMLElement {
                     "Extra context sent with every prompt",
                     (value) => {
                         interpreter.context = value
-                        ctx.save()
+                        void ctx.save()
                     },
                     5,
                 ),
@@ -89,7 +89,7 @@ function buildModelSelect(ctx: PageContext): HTMLElement {
         interpreter.selectedModelId,
         (value) => {
             interpreter.selectedModelId = value
-            ctx.save()
+            void ctx.save()
         },
     )
 }
@@ -120,7 +120,7 @@ function buildProviderList(ctx: PageContext): HTMLElement {
                     interpreter.models = interpreter.models.filter(
                         (m) => m.providerId !== provider.id,
                     )
-                    ctx.save()
+                    void ctx.save()
                     ctx.rerender()
                 }),
             ]),
@@ -168,7 +168,7 @@ function providerDialog(ctx: PageContext, providerId: string | null): void {
                     }
                     interpreter.providers.push(provider)
                 }
-                ctx.save()
+                void ctx.save()
                 ctx.rerender()
             }
             void requestOriginPermission(baseUrl.value).then(apply)
@@ -210,7 +210,7 @@ function buildModelList(ctx: PageContext): HTMLElement {
                 iconButton("close", "Delete", () => {
                     interpreter.models = interpreter.models.filter((m) => m.id !== model.id)
                     if (interpreter.selectedModelId === model.id) interpreter.selectedModelId = ""
-                    ctx.save()
+                    void ctx.save()
                     ctx.rerender()
                 }),
             ]),
@@ -270,7 +270,7 @@ function modelDialog(ctx: PageContext, modelId: string | null): void {
                 interpreter.models.push(model)
                 if (interpreter.selectedModelId === "") interpreter.selectedModelId = model.id
             }
-            ctx.save()
+            void ctx.save()
             ctx.rerender()
         },
     )

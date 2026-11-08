@@ -6,7 +6,7 @@ import { pickImage } from "../../src/lib/image"
 const BASE = "https://example.com/article"
 
 function doc(html: string): Document {
-    return parseHTML(html).document as unknown as Document
+    return parseHTML(html).document
 }
 
 describe("pickImage", () => {

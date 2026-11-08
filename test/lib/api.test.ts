@@ -7,14 +7,22 @@ function fetchMock(response: {
     status?: number
     statusText?: string
     body?: unknown
+    pingBody?: unknown
 }) {
-    return vi.fn(
-        async () =>
-            new Response(JSON.stringify(response.body ?? {}), {
-                status: response.status ?? (response.ok === false ? 500 : 200),
-                statusText: response.statusText ?? "",
-            }),
-    ) as unknown as typeof fetch
+    return vi.fn(async (input: string | URL | Request) => {
+        const url = input instanceof Request ? input.url : String(input)
+        if (url.endsWith("/ping")) {
+            return Response.json(
+                response.pingBody === undefined
+                    ? { app: "datalith", version: "1.2.0", api_version: 1 }
+                    : response.pingBody,
+            )
+        }
+        return new Response(JSON.stringify(response.body ?? {}), {
+            status: response.status ?? (response.ok === false ? 500 : 200),
+            statusText: response.statusText ?? "",
+        })
+    }) as unknown as typeof fetch
 }
 
 describe("ClipperApi", () => {
@@ -34,11 +42,11 @@ describe("ClipperApi", () => {
         expect(result.ok && result.data).toEqual([{ name: "Notes", path: "/vaults/Notes" }])
     })
 
-    it("hits the versioned vaults path and sends the bearer token", async () => {
+    it("checks compatibility before the vaults path and sends the bearer token", async () => {
         const fetchImpl = fetchMock({ body: [] })
         const api = new ClipperApi("http://127.0.0.1:42908/", "secret", fetchImpl)
         await api.vaults()
-        const [url, init] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0] as [
+        const [url, init] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[1] as [
             string,
             RequestInit,
         ]
@@ -50,7 +58,7 @@ describe("ClipperApi", () => {
     it("omits the Authorization header without a token", async () => {
         const fetchImpl = fetchMock({ body: [] })
         const api = new ClipperApi("http://127.0.0.1:42908", "", fetchImpl)
-        await api.ping()
+        await api.vaults()
         const [, init] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0] as [
             string,
             RequestInit,
@@ -77,7 +85,7 @@ describe("ClipperApi", () => {
         const api = new ClipperApi("http://127.0.0.1:42908", "", () =>
             Promise.reject(new TypeError("Failed to fetch")),
         )
-        const result = await api.ping()
+        const result = await api.vaults()
         expect(result).toEqual({
             ok: false,
             error: "Datalith is unreachable",
@@ -94,7 +102,7 @@ describe("ClipperApi", () => {
                     status: 200,
                 }),
         )
-        const result = await api.ping()
+        const result = await api.vaults()
         expect(result).toEqual({
             ok: false,
             error: "Malformed response from Datalith",
@@ -113,7 +121,7 @@ describe("ClipperApi", () => {
             content: "body",
         })
         expect(result.ok && result.data.path).toBe("Clips/Hello.md")
-        const [, init] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0] as [
+        const [, init] = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[1] as [
             string,
             RequestInit,
         ]
@@ -125,4 +133,38 @@ describe("ClipperApi", () => {
             content: "body",
         })
     })
+    it.each([
+        [{ app: "datalith", version: "1.1.0" }, "Update Datalith."],
+        [{ api_version: 0 }, "Update Datalith."],
+        [{ api_version: 2 }, "Update Datalith Clipper."],
+        [{ api_version: "1" }, "Update Datalith."],
+        [null, "Update Datalith."],
+    ])(
+        "blocks vault listing and note writes for invalid handshake %j",
+        async (pingBody, message) => {
+            const fetchImpl = fetchMock({ pingBody })
+            const api = new ClipperApi("http://127.0.0.1:42908", "", fetchImpl)
+            const vaults = await api.vaults()
+            const save = await api.saveNote({
+                vault: "Notes",
+                name: "Hello",
+                properties: {},
+                content: "body",
+            })
+            for (const result of [vaults, save]) {
+                expect(result.ok).toBe(false)
+                if (!result.ok) {
+                    expect(result.error).toContain(message)
+                    expect(result.kind).toBe("incompatible")
+                }
+            }
+            const calls = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls
+            expect(calls).toHaveLength(2)
+            expect(
+                calls.every(
+                    ([url, init]) => String(url).endsWith("/ping") && init.method === "GET",
+                ),
+            ).toBe(true)
+        },
+    )
 })

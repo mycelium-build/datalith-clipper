@@ -11,9 +11,11 @@ export interface SaveNoteRequest {
     content: string
 }
 
+export const SUPPORTED_API_VERSION = 1
+
 export type ApiResult<T> =
     | { ok: true; data: T }
-    | { ok: false; error: string; kind: "unreachable" | "http" }
+    | { ok: false; error: string; kind: "unreachable" | "http" | "incompatible" }
 
 export class ClipperApi {
     private baseUrl: string
@@ -26,15 +28,31 @@ export class ClipperApi {
         this.fetchImpl = fetchImpl
     }
 
-    async ping(): Promise<ApiResult<{ version?: string }>> {
-        return this.request("GET", "/ping")
+    private async checkCompatibility(): Promise<ApiResult<null>> {
+        const ping = await this.request<{ api_version?: unknown } | null>("GET", "/ping")
+        if (!ping.ok) return ping
+        const version = ping.data?.api_version
+        if (version === SUPPORTED_API_VERSION) return { ok: true, data: null }
+        const outdated =
+            typeof version === "number" && version > SUPPORTED_API_VERSION
+                ? "Datalith Clipper"
+                : "Datalith"
+        return {
+            ok: false,
+            error: `This Clipper requires Datalith API ${SUPPORTED_API_VERSION}. Update ${outdated}.`,
+            kind: "incompatible",
+        }
     }
 
     async vaults(): Promise<ApiResult<Vault[]>> {
+        const compatibility = await this.checkCompatibility()
+        if (!compatibility.ok) return compatibility
         return this.request<Vault[]>("GET", "/api/vaults")
     }
 
     async saveNote(note: SaveNoteRequest): Promise<ApiResult<{ path: string }>> {
+        const compatibility = await this.checkCompatibility()
+        if (!compatibility.ok) return compatibility
         return this.request("POST", "/api/notes", note)
     }
 

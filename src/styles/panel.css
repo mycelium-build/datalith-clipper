@@ -339,6 +339,35 @@
     }
 }
 
+.connection-banner {
+    flex: none;
+    padding: 8px;
+    margin: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--dl-fg);
+    overflow-wrap: anywhere;
+    background: var(--dl-surface);
+    border: 1px solid var(--dl-red);
+    border-radius: var(--radius-sm);
+}
+
+.retry-button {
+    padding: 3px 8px;
+    margin-top: 6px;
+    font: inherit;
+    color: var(--dl-fg);
+    cursor: pointer;
+    background: var(--dl-surface-alt);
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-sm);
+
+    &:disabled {
+        cursor: wait;
+        opacity: 0.5;
+    }
+}
+
 .footer {
     display: flex;
     flex: none;

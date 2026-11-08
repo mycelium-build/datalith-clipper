@@ -153,6 +153,21 @@ notices, then generates themes/icons before checking the project. It works witho
 a prior build. `npm run licenses:check` also fetches assets when run on its own.
 Each build includes complete notices for the assets it bundles.
 
+## Releases
+
+The first official release is **0.1.0**. `fix:` proposes a patch, `feat:` a minor,
+and `!` or `BREAKING CHANGE` a major, including before 1.0. `chore:` alone does
+not propose a release.
+
+After successful CI on `main`, release-please opens a version and changelog PR.
+Merging it immediately creates a `vX.Y.Z` tag and draft release, as in the app. The release workflow builds,
+checks and packages Chrome/Firefox, records the asset tag in the release notes,
+and publishes the ZIPs. There is no automatic PR merge or store publication.
+
+If publication fails, use **Re-run failed jobs** to reuse the saved archives.
+The workflow also accepts an existing tag for a manual rebuild while its release
+is still a draft. Published releases cannot be overwritten.
+
 ## Our stance on AI
 
 We allow PR made with AI, but you are responsible for your code. This implies that you have reread all your code and reaches a good quality. You should always understand what you have done. If you clearly did not read the code or it is fully vibe coded we allow ourselves to close the PR without reason.

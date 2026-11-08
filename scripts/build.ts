@@ -110,7 +110,7 @@ async function copyStatic(target: Target, notices: string): Promise<void> {
 
 async function main(): Promise<void> {
     const watch = process.argv.includes("--watch")
-    await syncAssets()
+    const assetRef = await syncAssets()
     await buildThemes()
     await buildIcons()
     const notices = await renderNotices()
@@ -124,6 +124,7 @@ async function main(): Promise<void> {
         await bundle(target, watch)
         console.log(`Built ${target} → dist/${target}`)
     }
+    await writeFile(path.join(distRoot, "assets-tag.txt"), `${assetRef}\n`)
     if (watch) {
         console.log("Watching for changes…")
     }

@@ -1,0 +1,132 @@
+name: Prepare release
+
+on:
+    # Release PR merges were already tested on the PR: release immediately.
+    push:
+        branches: [main]
+    workflow_run:
+        workflows: [CI]
+        types: [completed]
+        branches: [main]
+
+permissions:
+    contents: read
+
+concurrency:
+    group: prepare-release
+    cancel-in-progress: false
+
+jobs:
+    release:
+        if: github.event_name == 'push'
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Create automation token
+              id: app-token
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+              with:
+                  client-id: ${{ secrets.AUTOMATION_APP_CLIENT_ID }}
+                  private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
+
+            # Creates the draft release and, with force-tag-creation, its tag, which
+            # starts Release. A no-op unless the push merged a release PR.
+            - name: Create release from merged release PR
+              uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
+              with:
+                  token: ${{ steps.app-token.outputs.token }}
+                  target-branch: main
+                  config-file: release-please-config.json
+                  manifest-file: .release-please-manifest.json
+                  skip-github-pull-request: true
+
+    release-pr:
+        if: >-
+            github.event_name == 'workflow_run' &&
+            github.event.workflow_run.conclusion == 'success' &&
+            github.event.workflow_run.event == 'push' &&
+            github.event.workflow_run.head_repository.full_name == github.repository
+        runs-on: ubuntu-24.04
+        timeout-minutes: 15
+        steps:
+            - name: Create automation token
+              id: app-token
+              uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+              with:
+                  client-id: ${{ secrets.AUTOMATION_APP_CLIENT_ID }}
+                  private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
+
+            - name: Prepare next release
+              id: release-please
+              uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
+              with:
+                  token: ${{ steps.app-token.outputs.token }}
+                  target-branch: main
+                  config-file: release-please-config.json
+                  manifest-file: .release-please-manifest.json
+                  skip-github-release: true
+
+            - name: Wait for release PR branch to propagate
+              if: steps.release-please.outputs.prs_created == 'true'
+              run: sleep 10
+              shell: bash
+
+            - name: Verify release PR contains triggering commit
+              if: steps.release-please.outputs.prs_created == 'true'
+              uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+              env:
+                  RELEASE_PR: ${{ steps.release-please.outputs.pr }}
+                  TRIGGERING_SHA: ${{ github.event.workflow_run.head_sha }}
+              with:
+                  github-token: ${{ steps.app-token.outputs.token }}
+                  script: |
+                      const release = JSON.parse(process.env.RELEASE_PR)
+                      if (!Number.isInteger(release.number)) {
+                        core.setFailed('release-please did not return a valid release PR number')
+                        return
+                      }
+
+                      const response = await github.rest.pulls.get({
+                        ...context.repo,
+                        pull_number: release.number,
+                      })
+                      const pull = response.data
+                      const expectedRepository = `${context.repo.owner}/${context.repo.repo}`
+                      if (
+                        pull.state !== 'open' ||
+                        pull.base.ref !== 'main' ||
+                        !pull.head.ref.startsWith('release-please--branches--main') ||
+                        pull.head.repo?.full_name !== expectedRepository
+                      ) {
+                        core.setFailed(`release-please returned unexpected PR #${pull.number}`)
+                        return
+                      }
+
+                      const triggeringSha = process.env.TRIGGERING_SHA
+                      const comparison = await github.rest.repos.compareCommitsWithBasehead({
+                        ...context.repo,
+                        basehead: `${triggeringSha}...${pull.head.sha}`,
+                      })
+                      const containsTrigger = ['ahead', 'identical'].includes(comparison.data.status)
+
+                      await core.summary
+                        .addHeading('Release PR ancestry check')
+                        .addTable([
+                          [{ data: 'Release PR', header: true }, `#${pull.number}`],
+                          [{ data: 'Triggering commit', header: true }, triggeringSha],
+                          [{ data: 'Release PR head', header: true }, pull.head.sha],
+                          [{ data: 'Comparison', header: true }, comparison.data.status],
+                        ])
+                        .write()
+
+                      if (!containsTrigger) {
+                        core.setFailed(
+                          `Release PR #${pull.number} is stale: triggering commit ${triggeringSha} ` +
+                          `is not an ancestor of release PR head ${pull.head.sha} ` +
+                          `(comparison: ${comparison.data.status})`
+                        )
+                      }

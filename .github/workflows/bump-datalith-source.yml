@@ -65,6 +65,7 @@ jobs:
                   private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
                   permission-contents: write
                   permission-pull-requests: write
+                  permission-workflows: write
 
             - name: Push branch and open pull request
               if: steps.edit.outputs.changed == 'true'

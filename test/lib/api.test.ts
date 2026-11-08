@@ -149,7 +149,8 @@ describe("ClipperApi", () => {
         [{ app: "datalith", version: "2.0.0", api_version: 2 }, "Update Datalith Clipper"],
         [{ app: "datalith", version: "1.2.0", api_version: "1" }, "Malformed API version"],
         [{ app: "datalith", version: "1.2.0", api_version: 1.5 }, "Malformed API version"],
-        [{ app: "datalith", version: "1.2.0", api_version: 0 }, "Malformed API version"],
+        [{ app: "datalith", version: "1.2.0", api_version: 0 }, "Update Datalith."],
+        [{ app: "datalith", version: "1.2.0", api_version: -1 }, "Malformed API version"],
         [{ app: "other", version: "1.2.0", api_version: 1 }, "Malformed response"],
         [[], "Malformed response"],
     ])(

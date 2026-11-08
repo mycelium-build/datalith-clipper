@@ -58,11 +58,18 @@ export class ClipperApi {
         if (
             typeof data.api_version !== "number" ||
             !Number.isInteger(data.api_version) ||
-            data.api_version < 1
+            data.api_version < 0
         ) {
             return { ok: false, error: "Malformed API version from Datalith", kind: "http" }
         }
-        if (data.api_version !== SUPPORTED_API_VERSION) {
+        if (data.api_version < SUPPORTED_API_VERSION) {
+            return {
+                ok: false,
+                error: `Datalith API ${data.api_version} is too old for this Clipper (API ${SUPPORTED_API_VERSION}). Update Datalith.`,
+                kind: "incompatible",
+            }
+        }
+        if (data.api_version > SUPPORTED_API_VERSION) {
             return {
                 ok: false,
                 error: `Datalith API ${data.api_version} is not supported by this Clipper (API ${SUPPORTED_API_VERSION}). Update Datalith Clipper.`,

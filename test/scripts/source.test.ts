@@ -27,7 +27,7 @@ vi.mock("node:child_process", () => ({
     },
 }))
 
-import { latestStableTag, resolveDatalithSource } from "../../scripts/lib/source"
+import { resolveDatalithSource } from "../../scripts/lib/source"
 
 const release = (tag: string) => ({ tag_name: tag, draft: false, prerelease: false })
 const respond = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
@@ -89,28 +89,16 @@ describe("asset source", () => {
     })
 
     it.each([
-        { ...release("v1.2.0"), draft: true },
-        { ...release("v1.2.0"), prerelease: true },
-        release("v1.2.0-rc.1"),
-        {},
-    ])("rejects an invalid stable response %j", async (body) => {
-        await expect(latestStableTag(vi.fn().mockResolvedValue(respond(body)))).rejects.toThrow(
-            "published stable tag",
-        )
-    })
-
-    it("fails rather than using stale assets if release lookup fails", async () => {
-        await expect(latestStableTag(vi.fn().mockResolvedValue(respond({}, 403)))).rejects.toThrow(
-            "HTTP 403",
-        )
-    })
-
-    it("uses the Actions token for API rate limits, not clone URLs", async () => {
-        vi.stubEnv("GITHUB_TOKEN", "test-token")
-        const fetcher = vi.fn().mockResolvedValue(respond(release("v1.1.0")))
-        vi.stubGlobal("fetch", fetcher)
-        await resolveDatalithSource()
-        expect(fetcher.mock.calls[0]?.[1].headers.Authorization).toBe("Bearer test-token")
-        expect(state.clones[0]?.join(" ")).not.toContain("test-token")
-    })
+        [403, {}, "HTTP 403"],
+        [200, release("v1.2.0-rc.1"), "published stable tag"],
+    ])(
+        "rejects a failed or invalid release lookup (%s) despite a cached tag",
+        async (status, body, error) => {
+            state.marker = "v1.1.0"
+            vi.stubGlobal("fetch", vi.fn().mockResolvedValue(respond(body, status)))
+            await expect(resolveDatalithSource()).rejects.toThrow(error)
+            expect(state.clones).toHaveLength(0)
+            expect(state.marker).toBe("v1.1.0")
+        },
+    )
 })

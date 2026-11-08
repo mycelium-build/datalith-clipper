@@ -1,17 +1,17 @@
 @font-face {
-    font-display: swap;
     font-family: "Pixeloid Sans";
     font-style: normal;
     font-weight: 400;
     src: url("../fonts/PixeloidSans.ttf") format("truetype");
+    font-display: swap;
 }
 
 @font-face {
-    font-display: swap;
     font-family: "Pixeloid Sans";
     font-style: normal;
     font-weight: 700;
     src: url("../fonts/PixeloidSans-Bold.ttf") format("truetype");
+    font-display: swap;
 }
 
 :root {
@@ -37,19 +37,19 @@
 }
 
 body {
-    background: var(--dl-bg);
-    color: var(--dl-fg);
-    font-family: var(--font-sans);
     margin: 0;
+    font-family: var(--font-sans);
+    color: var(--dl-fg);
+    background: var(--dl-bg);
 }
 
 h1,
 h2,
 h3 {
+    margin: 0;
     font-family: var(--font-pixel);
     font-weight: 700;
     letter-spacing: 0.02em;
-    margin: 0;
 }
 
 a {

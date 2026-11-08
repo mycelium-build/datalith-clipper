@@ -77,14 +77,14 @@ npm run licenses:check
     | ---------- | ------------------------------------------------ | ------------------------------------------------------------------- |
     | pre-commit | staged files                                     | `vp fmt` formats them and stages the result; `vp lint`, `stylelint` |
     | pre-commit | `package*.json`, notices or license files staged | `licenses:check`; stale notices are regenerated and staged          |
-    | pre-push   | the pushed commits touch code or `package*.json` | `npm run typecheck`, `npm test`                                     |
+    | pre-push   | the pushed commits touch code or `package*.json` | `npm run check`, `npm test`                                         |
 
     The formatting and notice fixes only touch what you staged: prek sets unstaged changes aside while the hooks run.
     If a fix conflicts with unstaged changes in the same file, prek drops it and stops the commit; format or stage the file yourself and commit again.
     A `licenses:check` failure that regenerating the notices does not explain stops the commit.
     Run every pre-commit hook on the whole tree with `prek run --all-files`.
     Bypass a hook once with `--no-verify`; CI runs the same checks.
-    The pre-push typecheck needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.
+    The pre-push check needs the generated files (`src/lib/icons.ts`, `src/data/themes.json`), so run steps 3 once before your first push.
 
 3. Build:
 
@@ -180,6 +180,6 @@ By contributing to this project, you agree that your contributions will be licen
 
 ## Toolchain
 
-Vite+ runs formatting, linting and tests through the existing `npm run fmt`, `npm run lint` and `npm test` commands. Their shared configuration is in `vite.config.ts`. Stylelint still checks CSS, and `npm run typecheck` keeps the existing TypeScript check. The Chrome/Firefox extension build remains the custom Rolldown script in `scripts/build.ts`.
+Vite+ runs formatting, linting and tests through the existing `npm run fmt`, `npm run lint` and `npm test` commands. Their shared configuration is in `vite.config.ts`. Like the site, `npm run check` combines formatting, type-aware linting, type checking and Stylelint. It runs in CI and before pushing. `npm run typecheck` remains available for the standalone TypeScript check. The Chrome/Firefox extension build remains the custom Rolldown script in `scripts/build.ts`.
 
 Keep `vite-plus`, its `vite` alias and the bundled Vitest override aligned; Renovate groups these updates.

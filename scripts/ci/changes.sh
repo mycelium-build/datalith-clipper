@@ -27,7 +27,7 @@ git rev-parse --verify -q "${base}^{commit}" >/dev/null || unknown "base $base i
 files=$(git diff --name-only "$base" HEAD) || unknown "cannot diff $base with HEAD"
 
 # Exclusion list: files that neither the build, nor the checks, nor the tests read.
-# `oxfmt --check .` also formats the Markdown among them: the separate `format` job still covers it.
+# `vp fmt --check` also formats the Markdown among them: the separate `format` job still covers it.
 # Everything else, including any new path, counts as code.
 is_excluded() {
     case "$1" in

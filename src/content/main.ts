@@ -27,7 +27,7 @@ browser.runtime.onMessage.addListener((message: unknown) => {
         if (Panel.current) {
             Panel.current.toggleHighlighter()
         } else {
-            Panel.toggle(lastSelection, { enableHighlighter: true })
+            void Panel.toggle(lastSelection, { enableHighlighter: true })
         }
     }
 })

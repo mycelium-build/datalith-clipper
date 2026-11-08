@@ -116,9 +116,6 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
               run: npm run sync-assets
 
-            - name: Lint
-              run: npm run lint
-
             # Assets move with stable releases. Keep the committed npm notices checked;
             # Build validates asset license files and renders complete notices into each ZIP.
             - name: Check dependency license notices
@@ -130,8 +127,8 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
               run: npm run build
 
-            - name: Typecheck
-              run: npm run typecheck
+            - name: Check formatting, lint and types
+              run: npm run check
 
             - name: Run tests
               run: npm test

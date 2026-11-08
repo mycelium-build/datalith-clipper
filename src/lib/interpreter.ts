@@ -50,11 +50,11 @@ export type CompleteSender = (context: string, prompt: string) => Promise<Interp
 
 async function defaultSend(context: string, prompt: string): Promise<InterpreterResponse> {
     const browser = (await import("webextension-polyfill")).default
-    return (await browser.runtime.sendMessage({
+    return browser.runtime.sendMessage({
         type: "interpreter-complete",
         context,
         prompt,
-    })) as InterpreterResponse
+    })
 }
 
 export function createCompleter(

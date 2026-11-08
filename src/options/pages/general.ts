@@ -78,7 +78,7 @@ export function renderGeneral(ctx: PageContext): HTMLElement {
                         ctx.state.settings.appearance.mode =
                             mode as typeof ctx.state.settings.appearance.mode
                         ctx.applyTheme()
-                        ctx.save()
+                        void ctx.save()
                     },
                 ),
             ),
@@ -87,7 +87,7 @@ export function renderGeneral(ctx: PageContext): HTMLElement {
                 selectInput(themeOptionsFor("light"), ctx.state.settings.appearance.light, (id) => {
                     ctx.state.settings.appearance.light = id
                     ctx.applyTheme()
-                    ctx.save()
+                    void ctx.save()
                 }),
             ),
             fieldRow(
@@ -95,7 +95,7 @@ export function renderGeneral(ctx: PageContext): HTMLElement {
                 selectInput(themeOptionsFor("dark"), ctx.state.settings.appearance.dark, (id) => {
                     ctx.state.settings.appearance.dark = id
                     ctx.applyTheme()
-                    ctx.save()
+                    void ctx.save()
                 }),
             ),
         ]),
@@ -116,7 +116,7 @@ export function renderGeneral(ctx: PageContext): HTMLElement {
                 "Save clipped note without opening Datalith",
                 toggleInput(ctx.state.settings.behavior.saveWithoutOpening, (value) => {
                     ctx.state.settings.behavior.saveWithoutOpening = value
-                    ctx.save()
+                    void ctx.save()
                 }),
                 "When off, the saved note is revealed in Datalith after every save.",
             ),
@@ -158,7 +158,7 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
         connection.token = tokenInput.value.trim()
         void ctx.save()
         onConnectionChanged()
-        void refreshAccess()
+        refreshAccess()
     }
     const scheduleApply = debounce(apply, CONNECTION_DEBOUNCE_MS)
 
@@ -166,7 +166,7 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
     const accessButton = actionButton("Grant access", () => {
         const baseUrl = composeBaseUrl(urlInput.value, portInput.value)
         if (baseUrl === null) return
-        void requestOriginPermission(baseUrl).then(() => void refreshAccess())
+        void requestOriginPermission(baseUrl).then(() => refreshAccess())
     })
     const refreshAccess = () => {
         const baseUrl = composeBaseUrl(urlInput.value, portInput.value)
@@ -191,7 +191,7 @@ function buildConnectionSection(ctx: PageContext, onConnectionChanged: () => voi
     const tokenInput = textInput(connection.token, "Paste the token from Datalith", () =>
         scheduleApply(),
     )
-    void refreshAccess()
+    refreshAccess()
 
     return el("div", {}, [
         fieldRow("URL", urlInput, "Address of the machine running Datalith."),
@@ -220,7 +220,7 @@ function debounce(run: () => void, waitMs: number): () => void {
 async function loadVaults(select: HTMLSelectElement): Promise<void> {
     select.replaceChildren(new Option("Loading vaults…", ""))
     select.disabled = true
-    const response = (await browser.runtime.sendMessage({ type: "get-vaults" })) as VaultsResponse
+    const response: VaultsResponse = await browser.runtime.sendMessage({ type: "get-vaults" })
     if (!response.ok) {
         select.replaceChildren(new Option(`Unavailable — ${response.error}`, ""))
         select.disabled = true

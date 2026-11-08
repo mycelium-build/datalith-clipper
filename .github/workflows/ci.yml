@@ -19,7 +19,7 @@ env:
     # tracking `main` makes a CI result depend on a repository this commit does not contain.
     DATALITH_SOURCE_REF: v1.1.0
 
-# Only an explicit 'false' or 'true' output may skip a job: an empty output (a failed job) must run everything.
+# A job is skipped only on an explicit answer (verified 'true', code 'false'): an empty output from a failed job runs everything.
 jobs:
     # On main, skip everything when the pull request that was just merged already verified this tree.
     reuse:

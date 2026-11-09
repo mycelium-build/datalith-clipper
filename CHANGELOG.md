@@ -100,7 +100,6 @@
 
 ### Bug Fixes
 
-* **api:** check Datalith API compatibility before requests ([482be86](https://github.com/mycelium-build/datalith-clipper/commit/482be867e37cf694752e0d14d9210ab1a954bfd6))
 * **api:** check Datalith API compatibility before requests ([8e372bb](https://github.com/mycelium-build/datalith-clipper/commit/8e372bb10fdc4519cd97ed2ea69612815b224f35))
 * **api:** direct older API users to update Datalith ([075284c](https://github.com/mycelium-build/datalith-clipper/commit/075284ccfed0bfdf2d6e0fbfc4e99b7dd17bc0fb))
 * **api:** fetch to ([772908b](https://github.com/mycelium-build/datalith-clipper/commit/772908b0a0cc9f823c5da2f434a0d612309fc663))
@@ -109,7 +108,6 @@
 * **check:** prepare current assets and validate their licenses ([76aa905](https://github.com/mycelium-build/datalith-clipper/commit/76aa905a18f823f1779a6bee2fec4cb4d1f14828))
 * **ci:** check release drafts only in the publish job ([acd779b](https://github.com/mycelium-build/datalith-clipper/commit/acd779b65ea71d2626c213df6f47cef6a6b119de))
 * **content:** reader close and text displaying ([1432896](https://github.com/mycelium-build/datalith-clipper/commit/14328967158c60c01eee72e361a7202a438a1ceb))
-* **deps:** update security updates [SECURITY] ([ab28f78](https://github.com/mycelium-build/datalith-clipper/commit/ab28f7859ae18dc724f49351b7888cd0e922d049))
 * **deps:** update security updates [SECURITY] ([d99928a](https://github.com/mycelium-build/datalith-clipper/commit/d99928a3863765e21f4752180fc068f57146ac6c))
 * **interpreter:** resolve variable in context ([fab84e8](https://github.com/mycelium-build/datalith-clipper/commit/fab84e81ebba95dcb30f83bff79b79be446f0650))
 * **lib/template:** typo ([baec56c](https://github.com/mycelium-build/datalith-clipper/commit/baec56c67453f15fef1a7cb2aa4e93fe737acdce))

@@ -23,7 +23,7 @@
     "dependencies": {
         "defuddle": "^0.19.3",
         "dompurify": "^3.4.14",
-        "knap": "^0.4.2",
+        "knap": "^0.6.0",
         "marked": "^18.0.11",
         "webextension-polyfill": "^0.12.0"
     },

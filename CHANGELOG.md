@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/mycelium-build/datalith-clipper/compare/v0.1.0...v0.1.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* **deps:** update dependency defuddle to v0.19.6 ([64b3ee4](https://github.com/mycelium-build/datalith-clipper/commit/64b3ee4f4d093c1bae179b372d550f5955c41692))
+* **deps:** update minor dependencies ([616eab8](https://github.com/mycelium-build/datalith-clipper/commit/616eab87db3b0ae44db2ae9ee0556e57733c41a9))
+
 ## 0.1.0 (2026-11-08)
 
 

@@ -985,7 +985,7 @@ Apache License
 
 Used by:
 
-- `marked` 18.0.11
+- `marked` 18.2.0
 
 ```
 # License information
@@ -1129,7 +1129,7 @@ SOFTWARE.
 
 Used by:
 
-- `knap` 0.4.2
+- `knap` 0.6.0
 
 ```
 MIT License

@@ -1146,7 +1146,7 @@ SOFTWARE.
 
 Used by:
 
-- `defuddle` 0.19.6
+- `defuddle` 0.19.13
 
 ```
 MIT License
